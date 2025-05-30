@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <!--=============== FAVICON ===============-->
+        <!--=============== FAVICON ===============-->
+         <link rel="shortcut icon" href="{{ url_for('static', filename='img/icond.png') }}" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!--=============== BOXICONS ===============-->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <!--=============== SWIPER CSS ===============-->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/swiper-bundle.min.css') }}">
+    <!--=============== CSS ===============-->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    
+    </head>
+    <title>Panel</title>
+    <body>
+        <!--=============== HEADER ===============-->
+        
+        <header class="header" id="header">
+            <nav class="nav container">
+                <a href="{{ url_for('panel') }}" class="nav__logo">IntelliForge</a>
+                
+                </div>
+                <!-- Change Theme Color -->
+                <i class='bx bx-moon change-theme' id="theme-button"></i>
+            </nav>
+        </header>
+
+        <main class="main">
+            <!--=============== HOME ===============-->
+            <section class="home section" id="home">
+                <div class="home__container container grid">
+                      <!--=============== SERVICES ===============-->
+            <section class="services section">
+                <span class="section__subtitle">My RAG Applications</span>
+                <h2 class="section__title">Choose or Create a RAG</h2>
+    
+                <div class="services__container container grid">
+                   
+                    <div class="services__card">
+                        <h3 class="services__title">Create New RAG</h3>
+                        <p class="services__description">Create a new RAG application from scratch</p>
+                        <span class="services__button" onclick="window.location.href='{{ url_for('rag_creator.create_new_rag') }}'">
+                            Create New <i class='bx bx-right-arrow-alt services__icon' ></i>
+                        </span>
+                    </div>
+                    
+                    {% for rag in rags %}
+                    <div class="services__card">
+                        <h3 class="services__title">{{ rag.name }}</h3>
+                        <p class="services__description">
+                            {% if rag.project_purpose and rag.project_purpose|length > 50 %}
+                                {{ rag.project_purpose[:50] }}...
+                            {% elif rag.project_purpose %}
+                                {{ rag.project_purpose }}
+                            {% else %}
+                                {{ rag.model_type }} - {{ rag.model_name }}
+                            {% endif %}
+                        </p>
+                        <div class="services__status">Status: {{ rag.status }}</div>
+                        <div class="services__actions">
+                            {% if rag.status == 'ready' %}
+                            <span class="services__button" onclick="window.location.href='{{ url_for('developerassistant.chat_with_rag', rag_id=rag.id) }}'">
+                                Chat <i class='bx bx-message-alt-detail services__icon' ></i>
+                            </span>
+                            {% else %}
+                            <span class="services__button" onclick="window.location.href='{{ url_for('rag_creator.rag_details', rag_id=rag.id) }}'">
+                                Continue Setup <i class='bx bx-cog services__icon' ></i>
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+                    
+                </div>
+            </section>
+            
+        <div class="work__container container grid" id="MixItUp41FB2B" style="">    
+        </main>
+    </body>
+    <script>
+        /*=============== SCROLL SECTIONS ACTIVE LINK ===============*/
+        const sections = document.querySelectorAll('section[id]')
+            
+            const scrollActive = () => {
+                const scrollY = window.pageYOffset
+            
+                sections.forEach(current => {
+                    const sectionHeight = current.offsetHeight,
+                        sectionTop = current.offsetTop - 58,
+                        sectionId = current.getAttribute('id'),
+                        sectionsClass = document.querySelector('.nav__menu a[href="#' + sectionId + '"]')
+            
+                    if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
+                        sectionsClass.classList.add('active-link')
+                    } else {
+                        // Check if sectionsClass is not null before attempting to remove the class
+                        if (sectionsClass) {
+                            sectionsClass.classList.remove('active-link')
+                        }
+                    }
+                })
+            }
+            
+            window.addEventListener('scroll', scrollActive)
+            /*=============== LIGHT DARK THEME ===============*/ 
+            const themeButton = document.getElementById('theme-button')
+            const lightTheme = 'light-theme'
+            const iconTheme = 'bx-sun'
+            
+            // Previously selected topic (if user selected)
+            const selectedTheme = localStorage.getItem('selected-theme')
+            const selectedIcon = localStorage.getItem('selected-icon')
+            
+            // We obtain the current theme that the interface has by validating the dark-theme class
+            const getCurrentTheme = () => document.body.classList.contains(lightTheme) ? 'dark' : 'light'
+            const getCurrentIcon = () => themeButton.classList.contains(iconTheme) ? 'bx bx-moon' : 'bx bx-sun'
+            
+            // We validate if the user previously chose a topic
+            if (selectedTheme) {
+            // If the validation is fulfilled, we ask what the issue was to know if we activated or deactivated the dark
+            document.body.classList[selectedTheme === 'dark' ? 'add' : 'remove'](lightTheme)
+            themeButton.classList[selectedIcon === 'bx bx-moon' ? 'add' : 'remove'](iconTheme)
+            }
+            
+            // Activate / deactivate the theme manually with the button
+            themeButton.addEventListener('click', () => {
+                // Add or remove the dark / icon theme
+                document.body.classList.toggle(lightTheme)
+                themeButton.classList.toggle(iconTheme)
+                // We save the theme and the current icon that the user chose
+                localStorage.setItem('selected-theme', getCurrentTheme())
+                localStorage.setItem('selected-icon', getCurrentIcon())
+            })
+    
+    </script>
+</html>

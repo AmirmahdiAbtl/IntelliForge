@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!--=============== FAVICON ===============-->
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/icond.png') }}" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!--=============== BOXICONS ===============-->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <!--=============== SWIPER CSS ===============-->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/swiper-bundle.min.css') }}">
+    <!--=============== CSS ===============-->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<title>RAG Details</title>
+<body>
+    <!--=============== HEADER ===============-->
+    
+    <header class="header" id="header">
+        <nav class="nav container">
+            <a href="{{ url_for('panel') }}" class="nav__logo">IntelliForge</a>
+            
+            </div>
+            <!-- Change Theme Color -->
+            <i class='bx bx-moon change-theme' id="theme-button"></i>
+        </nav>
+    </header>
+
+    <main class="main">
+        <!--=============== RAG DETAILS SECTION ===============-->
+        <section class="home section" id="home">
+            <div class="home__container container grid">
+                <section class="contact section" id="contact">
+                    <h2 class="section__title">{{ rag.name }}</h2>
+                    <span class="section__subtitle">RAG Application Details</span>
+            
+                    <div class="contact__container container grid">
+                        <div class="contact__content">
+                            <div class="rag-details">
+                                <div class="rag-info">
+                                    <h3>Status: {{ rag.status }}</h3>
+                                    
+                                    <div class="rag-model-info">
+                                        <h4>Model Information</h4>
+                                        <p><strong>Model Type:</strong> {{ rag.model_type or 'Not set' }}</p>
+                                        <p><strong>Model Name:</strong> {{ rag.model_name or 'Not set' }}</p>
+                                    </div>
+                                    
+                                    {% if rag.embedding_model %}
+                                    <div class="rag-embedding-info">
+                                        <h4>Embedding & Vector Database</h4>
+                                        <p><strong>Embedding Model:</strong> {{ rag.embedding_model }}</p>
+                                        <p><strong>Vector Database:</strong> {{ rag.vector_db }}</p>
+                                        <p><strong>Chunk Size:</strong> {{ rag.chunk_size }}</p>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if rag.project_purpose %}
+                                    <div class="rag-purpose">
+                                        <h4>Project Purpose</h4>
+                                        <p>{{ rag.project_purpose }}</p>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if documents %}
+                                    <div class="rag-documents">
+                                        <h4>Documents ({{ documents|length }})</h4>
+                                        <ul class="document-list">
+                                            {% for doc in documents %}
+                                            <li>
+                                                <div class="doc-type">
+                                                    {% if doc.doc_type == 'pdf' %}
+                                                    <i class='bx bxs-file-pdf'></i>
+                                                    {% elif doc.doc_type == 'link' %}
+                                                    <i class='bx bx-link'></i>
+                                                    {% else %}
+                                                    <i class='bx bxs-file-txt'></i>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="doc-info">
+                                                    <p class="doc-name">{{ doc.doc_name }}</p>
+                                                    <p class="doc-desc">{{ doc.description }}</p>
+                                                </div>
+                                            </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if rag.prompt_template %}
+                                    <div class="rag-prompt">
+                                        <h4>Prompt Template</h4>
+                                        <div class="prompt-template">
+                                            <pre>{{ rag.prompt_template }}</pre>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="rag-actions">
+                                    <h3>Continue Setup</h3>
+                                    
+                                    {% if rag.status == 'init' %}
+                                    <a href="{{ url_for('rag_creator.model_selection', rag_id=rag.id) }}" class="button">
+                                        Continue to Model Selection
+                                    </a>
+                                    {% elif rag.status == 'created' %}
+                                    <a href="{{ url_for('rag_creator.db_embedding_selection', rag_id=rag.id) }}" class="button">
+                                        Continue to DB & Embedding Setup
+                                    </a>
+                                    {% elif rag.status == 'configured' %}
+                                    <a href="{{ url_for('rag_creator.documentation_upload', rag_id=rag.id) }}" class="button">
+                                        Continue to Document Upload
+                                    </a>
+                                    {% elif rag.status == 'uploaded_docs' %}
+                                    <a href="{{ url_for('rag_creator.prompt_template', rag_id=rag.id) }}" class="button">
+                                        Continue to Prompt Template
+                                    </a>
+                                    {% elif rag.status == 'ready' %}
+                                    <a href="{{ url_for('developerassistant.chat_with_rag', rag_id=rag.id) }}" class="button">
+                                        Start Chatting
+                                    </a>
+                                    {% endif %}
+                                    
+                                    <a href="{{ url_for('panel') }}" class="button button-secondary">
+                                        Back to Panel
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </section>
+    </main>
+    <script>
+            /*=============== LIGHT DARK THEME ===============*/ 
+            const themeButton = document.getElementById('theme-button')
+            const lightTheme = 'light-theme'
+            const iconTheme = 'bx-sun'
+            
+            // Previously selected topic (if user selected)
+            const selectedTheme = localStorage.getItem('selected-theme')
+            const selectedIcon = localStorage.getItem('selected-icon')
+            
+            // We obtain the current theme that the interface has by validating the dark-theme class
+            const getCurrentTheme = () => document.body.classList.contains(lightTheme) ? 'dark' : 'light'
+            const getCurrentIcon = () => themeButton.classList.contains(iconTheme) ? 'bx bx-moon' : 'bx bx-sun'
+            
+            // We validate if the user previously chose a topic
+            if (selectedTheme) {
+            // If the validation is fulfilled, we ask what the issue was to know if we activated or deactivated the dark
+            document.body.classList[selectedTheme === 'dark' ? 'add' : 'remove'](lightTheme)
+            themeButton.classList[selectedIcon === 'bx bx-moon' ? 'add' : 'remove'](iconTheme)
+            }
+            
+            // Activate / deactivate the theme manually with the button
+            themeButton.addEventListener('click', () => {
+                // Add or remove the dark / icon theme
+                document.body.classList.toggle(lightTheme)
+                themeButton.classList.toggle(iconTheme)
+                // We save the theme and the current icon that the user chose
+                localStorage.setItem('selected-theme', getCurrentTheme())
+                localStorage.setItem('selected-icon', getCurrentIcon())
+            })
+    
+    </script>
+        
+    
+    <style>
+        .rag-details {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        
+        .rag-info {
+            background-color: var(--container-color);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .rag-info h3 {
+            margin-bottom: 1rem;
+            color: var(--title-color);
+        }
+        
+        .rag-info h4 {
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--title-color);
+        }
+        
+        .document-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .document-list li {
+            display: flex;
+            gap: 1rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .doc-type i {
+            font-size: 1.5rem;
+            color: var(--first-color);
+        }
+        
+        .doc-name {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+        
+        .doc-desc {
+            font-size: 0.875rem;
+            color: var(--text-color-light);
+        }
+        
+        .prompt-template {
+            background-color: rgba(0, 0, 0, 0.05);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+        }
+        
+        .prompt-template pre {
+            margin: 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+        
+        .rag-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1.5rem;
+            background-color: var(--container-color);
+            border-radius: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .button-secondary {
+            background-color: transparent;
+            color: var(--first-color);
+            border: 1px solid var(--first-color);
+        }
+    </style>
+</body>
+</html> 

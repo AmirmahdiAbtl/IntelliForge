@@ -1,0 +1,9 @@
+# Ignore environment files
+.env
+
+# Ignore dependencies and logs
+uploads/
+vectordb/
+
+# Ignore system files
+database.db

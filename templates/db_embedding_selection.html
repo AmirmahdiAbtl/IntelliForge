@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <!--=============== FAVICON ===============-->
+    <!--=============== FAVICON ===============-->
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/icond.png') }}" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!--=============== BOXICONS ===============-->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <!--=============== SWIPER CSS ===============-->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/swiper-bundle.min.css') }}">
+    <!--=============== CSS ===============-->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    </head>
+    <title>IntelliForge</title>
+    <style>
+    </style>
+    <body>
+        <!--=============== HEADER ===============-->
+        
+        <header class="header" id="header">
+            <nav class="nav container">
+                <a href="{{ url_for('panel') }}" class="nav__logo">RAGCraft</a>
+                
+                </div>
+                <!-- Change Theme Color -->
+                <i class='bx bx-moon change-theme' id="theme-button"></i>
+            </nav>
+        </header>
+
+        <main class="main">
+            <!--=============== HOME ===============-->
+            <section class="home section" id="home">
+                <div class="home__container container grid">
+                    <section class="form section" id="form">
+                        
+                        <div class="form__container container">
+
+                            <div class="form__section mix form-contact form-a">
+                                <section class="contact section" id="contact">
+                                    <h2 class="section__title">Step 2</h2>
+                        
+                                    <div class="contact__container container grid" >
+                                        <div class="contact__content">
+                                            <form action="{{ url_for('rag_creator.db_embedding_selection', rag_id=rag.id) }}" method="POST" class="contact__form">
+                                                <div class="contact__form-div">
+                                                    <label for="embedding_model">Embedding Model:</label>
+                                                    <select name="embedding_model" id="embedding_model" required>
+                                                        <option value="sentence-transformers/all-MiniLM-L6-v2">Sentence Transformers MiniLM</option>
+                                                        <!-- <option value="text-embedding-ada-002">OpenAI Ada</option>
+                                                        <option value="ollama/nomic-embed-text">Ollama/Nomic</option> -->
+                                                    </select>
+                                                </div>
+                                                <div class="contact__form-div">
+                                                    <label for="vector_db">Vector Database:</label>
+                                                    <select name="vector_db" id="vector_db" required>
+                                                        <option value="faiss">FAISS</option>
+                                                        <option value="chroma">Chroma</option>
+                                                        <!-- <option value="pinecone">Pinecone</option> -->
+                                                    </select>
+                                                </div>
+                                                <div class="contact__form-div">
+                                                    <label for="chunk_size">Chunk Size:</label>
+                                                    <input type="number" name="chunk_size" id="chunk_size" value="500" min="100" max="4000" required>
+                                                    
+                                                </div>
+                                                <div class="contact__form-div">
+                                                    <label for="project_purpose">Project Purpose:</label>
+                                                    <textarea name="project_purpose" id="project_purpose" rows="4" placeholder="Describe what this RAG application will be used for..."></textarea>
+                                                </div>
+                                                <button style="width: 100%; margin-top: 3rem;" type="submit" class="button">Next Step</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </section>
+            
+        <div class="work__container container grid" id="MixItUp41FB2B" style="">    
+        </main>
+        
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Define the image sequences for each card
+                const imageSequence1 = ['img/Bi dashboard.png', 'img/Bi dashboard2.png', 'img/Bi dashboard3.png', 'img/Bi dashboard4.png'];
+                const imageSequence2 = ['poster/mlp11.webp', 'poster/mlp12.webp'];
+                const imageSequence3 = ['img/Bi dashboard.png', 'img/Bi dashboard2.png', 'img/Bi dashboard3.png', 'img/Bi dashboard4.png'];
+                const imageSequence4 = ['poster/num1.webp', 'poster/num2.webp'];
+                // Function to change images
+                function changeImageOnHover(cardId, imgId, images) {
+                    let img = document.getElementById(imgId);
+                    let currentIndex = 0;
+                    let interval;
+            
+                    document.getElementById(cardId).addEventListener('mouseenter', function() {
+                        interval = setInterval(() => {
+                            img.src = images[currentIndex];
+                            currentIndex = (currentIndex + 1) % images.length;
+                        }, 1000); // Change image every 1000ms (1 second)
+                    });
+            
+                    document.getElementById(cardId).addEventListener('mouseleave', function() {
+                        clearInterval(interval);
+                        img.src = images[0]; // Reset to the first image
+                    });
+                }
+            
+                // Initialize the hover effect for each card
+                changeImageOnHover('workCard1', 'workImg1', imageSequence1);
+                changeImageOnHover('workCard2', 'workImg2', imageSequence2);
+                changeImageOnHover('workCard3', 'workImg3', imageSequence3);
+                changeImageOnHover('workCard4', 'workImg4', imageSequence4);
+            });
+
+            
+            document.querySelectorAll('.nav__link').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    
+                    const targetId = this.getAttribute('href').substring(1); // Get section ID from href
+                    const targetSection = document.getElementById(targetId);
+                    
+                    // Fallback if smooth scroll behavior isn't natively supported
+                    targetSection.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                });
+            });
+
+            </script>
+            
+        <!--=============== SCROLLREVEAL ===============-->
+        <script src="{{ url_for('static', filename='js/scrollreveal.min.js') }}"></script>
+
+        <!--=============== SWIPER JS ===============-->
+        <script src="{{ url_for('static', filename='js/swiper-bundle.min.js') }}"></script>
+    
+        <!--=============== MIXITUP FILTER ===============-->
+        <script src="{{ url_for('static', filename='js/mixitup.min.js') }}"></script>
+    
+        <!--=============== MAIN JS ===============-->
+        <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+        
+    </body>
+</html>

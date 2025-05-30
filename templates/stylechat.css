@@ -1,0 +1,323 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  /* Light theme variables */
+  :root {
+    --color-bg: #f8f8f8;
+    --color-border-btn: #000;
+    --color-btn-hover: #ccc;
+    --color-text: #333;
+    --color-primary: #4f46e5; /* Indigo */
+    --color-secondary: #ffffff;
+    --color-border: #ccc;
+    --color-accent: #6366f1;
+    --color-error: #dc2626;
+  }
+
+  /* Dark theme overrides */
+  html.dark {
+    --color-border-btn: #fff;
+    --color-bg: #111827;
+    --color-btn-hover: #344359;
+    --color-text: #f9fafb;
+    --color-primary: #8b5cf6;
+    --color-secondary: #1f2937;
+    --color-border: #374151;
+    --color-accent: #a78bfa;
+    --color-error: #f87171;
+  }
+
+  body {
+    font-family: sans-serif;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .main-container {
+    flex: 1;
+    display: flex;
+    height: calc(100vh - 2rem);
+    margin: 0rem auto;
+    width: 100%;
+    gap: 1rem;
+    position: relative;
+    transition: width 0.3s ease;
+  }
+
+  /* Sidebar styles */
+  .sidebar {
+    /* background-color: var(--color-secondary); */
+    /* border: 1px solid var(--color-border); */
+    width: 300px; /* Default expanded width */
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 0.25rem;
+    transition: width 0.3s ease;
+    position: relative;
+  }
+
+  /* When partially hidden, reduce sidebar width to ~30% of original (e.g. 90px) */
+  html.sidebar-partially-hidden .sidebar {
+    width: 90px;
+  }
+
+  .sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .sidebar-title {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--color-text);
+    transition: opacity 0.3s ease;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  /* Hide the title text when partially hidden */
+  html.sidebar-partially-hidden .sidebar-title {
+    opacity: 0;
+  }
+
+  /* New chat button with separate icon and text */
+  .new-chat-btn {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-size: 1rem;
+    border: 1px solid var(--color-border-btn);
+    cursor: pointer;
+    border-radius: 0.25rem;
+    display: flex;
+    align-items: center;
+    height: 2rem;
+    padding: 0 1rem;
+    transition: width 0.3s ease;
+    white-space: nowrap;
+  }
+  .new-chat-btn:hover {
+    color: var(--color-bg);
+    background-color: var(--color-text);
+    transition: all 500ms;
+  }
+  /* Child elements for plus icon and label */
+  .btn-icon {
+    margin-right: 0.5rem;
+  }
+  /* Hide the text label when partially hidden */
+  html.sidebar-partially-hidden .btn-icon {
+    display: none;
+  }
+
+  /* List of chats area */
+  .sidebar-list {
+    flex: 1;
+    overflow-y: auto;
+    list-style: none;
+    transition: opacity 0.3s ease;
+  }
+  /* Hide the chat list when partially hidden */
+  html.sidebar-partially-hidden .sidebar-list {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .sidebar-item {
+    padding: 1rem;
+    border-bottom: 1px solid var(--color-border);
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  .sidebar-item:hover {
+    background-color: rgba(99, 102, 241, 0.1);
+  }
+
+  /* Footer pinned at the bottom */
+  .sidebar-footer {
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: row; /* normal state: row */
+    align-items: center;
+    justify-content: space-evenly;
+    padding: 1rem;
+    gap: 0.5rem;
+    transition: flex-direction 0.3s ease;
+  }
+  /* In partially hidden mode, show them in column */
+  html.sidebar-partially-hidden .sidebar-footer {
+    flex-direction: column;
+  }
+
+  .toggle-mode-btn {
+    background-color: transparent;
+    color: var(--color-text);
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .toggle-mode-btn:hover {
+    background-color: rgba(99, 102, 241, 0.1);
+  }
+
+  .dark-icon {
+    display: none;
+  }
+  .light-icon {
+    display: block;
+  }
+  html.dark .dark-icon {
+    display: block;
+  }
+  html.dark .light-icon {
+    display: none;
+  }
+
+  .sidebar-toggle-btn {
+    background-color: transparent;
+    color: var(--color-text);
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .sidebar-toggle-btn:hover {
+    background-color: rgba(99, 102, 241, 0.1);
+  }
+
+  /* Chat Section */
+  .chat-section {
+    display: flex;
+    flex-direction: column;
+    border-radius: 0.25rem;
+    flex: 1;
+    transition: width 0.3s ease;
+  }
+
+  /* When the sidebar is partially hidden, expand the chat section slightly */
+  html.sidebar-partially-hidden .chat-section {
+    width: calc(100% + 210px);
+  }
+
+  .chat-window {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto; /* Enables scrolling */
+    max-height: 84vh; /* Ensures only this section scrolls */
+    background-color: var(--color-secondary);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .message-bubble {
+    max-width: 70%;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+  }
+  .message-outgoing {
+    background-color: #ededed;
+    color: #000000;
+    align-self: flex-end;
+    text-align: right;
+  }
+  .message-incoming {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    align-self: flex-start;
+  }
+  .message-error {
+    background-color: var(--color-error);
+    color: #fff;
+    margin: 0.5rem auto;
+  }
+
+  .input-bar {
+    background-color: var(--color-secondary);
+    padding: 1rem;
+  }
+
+  .form-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+  
+  .input-label {
+    font-size: 14px;
+    font-weight: bold;
+  }
+  
+  .input-wrapper {
+    position: relative;
+    width: 100%;
+  }
+  
+  .input-field {
+    width: 100%;
+    padding: 25px 50px 10px 20px; /* Right padding for button space */
+    border: 1px solid #ccc;
+    border-radius: 45px;
+    background-color: var(--color-secondary);
+    color: var(--color-text);
+    resize: none; /* Prevent textarea resizing */
+    font-size: 14px;
+  }
+  
+  .send-btn {
+    position: absolute;
+    right: 12px;
+    bottom: 15px;
+    border: none;
+    background-color: var(--color-secondary);
+    color: var(--color-text);
+    padding: 12px 12px;
+    border-radius: 100%;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .send-btn:hover{
+    transition: all 500ms;
+    background-color: var(--color-btn-hover);
+  }
+
+  @media (max-width: 768px) {
+    .main-container {
+      flex-direction: column;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .sidebar {
+      width: 100%;
+    }
+    html.sidebar-partially-hidden .sidebar {
+      width: 70px;
+    }
+    html.sidebar-partially-hidden .chat-section {
+      width: 100%;
+    }
+  }

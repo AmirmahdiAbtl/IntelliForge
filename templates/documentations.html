@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <!--=============== FAVICON ===============-->
+        <link rel="shortcut icon" href="{{ url_for('static', filename='img/icond.png') }}" type="image/x-icon">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <!--=============== BOXICONS ===============-->
+        <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+        <!--=============== SWIPER CSS ===============-->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/swiper-bundle.min.css') }}">
+        <!--=============== CSS ===============-->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+        <style>
+            .file-preview-box {
+                background: var(--container-color);
+                border: 1px solid var(--text-color-light);
+                border-radius: 0.5rem;
+                padding: 1rem;
+                margin-bottom: 2rem;
+                max-width: 100%;
+                width: 100%;
+            }
+
+            .file-preview-box h4 {
+                margin-bottom: 1rem;
+                color: var(--title-color);
+                font-size: 1.1rem;
+            }
+
+            .preview-files {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .preview-file-item {
+                background: var(--body-color);
+                padding: 0.5rem;
+                border-radius: 0.25rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                font-size: 0.875rem;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .preview-file-item i {
+                color: var(--first-color);
+            }
+
+            .preview-file-item .remove-preview {
+                cursor: pointer;
+                color: var(--text-color-light);
+                transition: color 0.3s;
+                padding: 0 0.25rem;
+            }
+
+            .preview-file-item .remove-preview:hover {
+                color: var(--first-color);
+            }
+
+            .document-list-section {
+                margin-bottom: 2rem;
+                padding: 1.5rem;
+                background: var(--container-color);
+                border-radius: 1rem;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .documents-container {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 1rem;
+                margin: 1rem 0;
+            }
+
+            .document-item {
+                display: flex;
+                align-items: center;
+                padding: 1rem;
+                background: var(--body-color);
+                border-radius: 0.5rem;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+                position: relative;
+            }
+
+            .document-item:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+
+            .document-icon {
+                font-size: 2rem;
+                margin-right: 1rem;
+                color: var(--first-color);
+            }
+
+            .document-info {
+                flex: 1;
+            }
+
+            .document-info h4 {
+                margin: 0;
+                font-size: 1rem;
+                color: var(--title-color);
+            }
+
+            .document-info p {
+                margin: 0.25rem 0 0;
+                font-size: 0.875rem;
+                color: var(--text-color-light);
+            }
+
+            .delete-doc-btn {
+                position: absolute;
+                top: 0.5rem;
+                right: 0.5rem;
+                background: none;
+                border: none;
+                color: var(--text-color-light);
+                cursor: pointer;
+                padding: 0.25rem;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s ease;
+            }
+
+            .delete-doc-btn:hover {
+                color: var(--first-color);
+                background: rgba(0, 0, 0, 0.05);
+            }
+
+            .delete-doc-btn i {
+                font-size: 1.25rem;
+            }
+        </style>
+    </head>
+    <title>Document Selection</title>
+    <body>
+        <!--=============== HEADER ===============-->
+        
+        <header class="header" id="header">
+            <nav class="nav container">
+                <a href="{{ url_for('panel') }}" class="nav__logo">IntelliForge</a>
+                
+                </div>
+                <!-- Change Theme Color -->
+                <i class='bx bx-moon change-theme' id="theme-button"></i>
+            </nav>
+        </header>
+
+        <main class="main">
+            <!--=============== HOME ===============-->
+            <section class="home section" id="home">
+                <div class="home__container container grid">
+                    <!-- Document List Section - Moved above forms -->
+                    {% if documents and documents|length > 0 %}
+                    <section class="document-list-section">
+                        <h3 class="section__subtitle">Uploaded Documents</h3>
+                        
+                        <div class="documents-container">
+                            {% for doc in documents %}
+                            <div class="document-item" data-doc-id="{{ doc.id }}">
+                                <div class="document-icon">
+                                    {% if doc.doc_type == 'pdf' %}
+                                    <i class='bx bxs-file-pdf'></i>
+                                    {% elif doc.doc_type == 'link' %}
+                                    <i class='bx bx-link'></i>
+                                    {% else %}
+                                    <i class='bx bxs-file-txt'></i>
+                                    {% endif %}
+                                </div>
+                                <div class="document-info">
+                                    <h4>{{ doc.doc_name }}</h4>
+                                    <p>{{ doc.description or "No description" }}</p>
+                                </div>
+                                <button class="delete-doc-btn" onclick="deleteDocument({{ doc.id }}, {{ rag.id }})">
+                                    <i class='bx bx-x'></i>
+                                </button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <form action="{{ url_for('rag_creator.documentation_upload', rag_id=rag.id) }}" method="POST">
+                            <input type="hidden" name="finish" value="true">
+                            <button type="submit" class="button">Continue to Next Step</button>
+                        </form>
+                    </section>
+                    {% endif %}
+
+                    <section class="form section" id="form">
+                        <span class="section__subtitle">Step 3 of 4: Document Upload</span>
+                        <h2 class="section__title">Select Your Documents</h2>
+
+                        <!-- File Preview Box -->
+                        <div class="file-preview-box" id="filePreviewBox" style="display: none;">
+                            <h4>Selected Files:</h4>
+                            <div class="preview-files" id="previewFiles"></div>
+                        </div>
+
+                        <div class="work__filters">
+                            <span class="work__item mixitup-control-active active-work" data-filter=".form-a">PDF</span>
+                            <span class="work__item" data-filter=".form-b">URL</span>
+                            <span class="work__item" data-filter=".form-c">TEXT</span>
+                        </div>
+
+                        <div class="form__container container">
+                            <!-- PDF SECTION -->
+                            <div class="form__section mix form-contact form-a">
+                                <section class="contact section" id="contact">
+                                    <div class="contact__container container grid" >
+                                        <div class="contact__content">
+                                            <form action="{{ url_for('rag_creator.documentation_upload', rag_id=rag.id) }}" method="POST" class="contact__form" enctype="multipart/form-data">
+                                                <input type="hidden" name="doc_type" value="pdf">
+                                                
+                                                <div class="custom-file-input" id="fileInputContainer">
+                                                    <div class="file-input-content">
+                                                        <div class="file-input-hint">Choose files or drag & drop them here</div>
+                                                        <div class="file-input-types">PDF formats, up to 50MB each</div>
+                                                        <button type="button" class="button button--ghost" style="margin-top: 1rem;">Browse Files</button>
+                                                        <div class="file-list" id="fileList"></div>
+                                                        <input type="file" 
+                                                               name="file" 
+                                                               id="file_input"
+                                                               accept=".pdf,.txt,.docx"
+                                                               multiple
+                                                               style="opacity: 0; position: absolute; width: 100%; height: 100%; top: 0; left: 0; cursor: pointer;">
+                                                    </div>
+                                                </div>
+                                                <div class="contact__form-div contact__form-area">
+                                                    <label for="description">Document Description:</label>
+                                                    <textarea name="description" cols="40" rows="5" id="description" placeholder="Describe these documents..."></textarea>
+                                                </div>
+                                                <button style="width: 100%;" type="submit" class="button">Upload Documents</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+                            
+                            <!-- URL SECTION -->
+                            <div class="form__section mix form-contact form-b">
+                                <section class="contact section" id="contact">
+                                    <span class="section__subtitle">Enter your links below</span>
+
+                                    <div class="contact__container container grid">
+                                        <div class="contact__content">
+                                            <form action="{{ url_for('rag_creator.documentation_upload', rag_id=rag.id) }}" method="POST" class="contact__form" id="urlForm">
+                                                <input type="hidden" name="doc_type" value="link">
+                                                
+                                                <div class="contact__form-div">
+                                                    <label for="links_input">Document URL:</label>
+                                                    <input 
+                                                        type="url" 
+                                                        name="doc_link"
+                                                        id="doc_link" 
+                                                        class="contact__form-input"
+                                                        placeholder="Enter a URL (e.g., https://example.com/docs)"
+                                                        autocomplete="off"
+                                                        required>
+                                                </div>
+                                                
+                                                <div class="contact__form-div contact__form-area">
+                                                    <label for="description">Document Description:</label>
+                                                    <textarea name="description" cols="40" rows="5" id="description" placeholder="Describe this URL..."></textarea>
+                                                </div>
+                                                
+                                                <button style="width: 100%;" type="submit" class="button button--flex">
+                                                    Upload URL
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+                            
+                            <!-- TEXT SECTION -->
+                            <div class="form__section mix form-contact form-c">
+                                <section class="contact section" id="contact">
+                                    <span class="section__subtitle">Enter your text document</span>
+                        
+                                    <div class="contact__container container grid" >
+                                        <div class="contact__content">
+                                            <form action="{{ url_for('rag_creator.documentation_upload', rag_id=rag.id) }}" method="POST" class="contact__form">
+                                                <input type="hidden" name="doc_type" value="text">
+                                                
+                                                <div class="contact__form-div contact__form-area" style="height: 20rem;">
+                                                    <label for="text_content">Text Content:</label>
+                                                    <textarea style="height: 20rem;" name="text_content" cols="40" rows="10" required id="text_content" placeholder="Paste or type your text here..."></textarea>
+                                                </div>
+                                                
+                                                <div class="contact__form-div contact__form-area">
+                                                    <label for="description">Document Description:</label>
+                                                    <textarea name="description" cols="40" rows="5" id="description" placeholder="Describe this text..."></textarea>
+                                                </div>
+                                                
+                                                <button style="width: 100%;" type="submit" class="button">Upload Text</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </section>
+        </main>
+        
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Define the image sequences for each card
+                const imageSequence1 = ['img/Bi dashboard.png', 'img/Bi dashboard2.png', 'img/Bi dashboard3.png', 'img/Bi dashboard4.png'];
+                const imageSequence2 = ['poster/mlp11.webp', 'poster/mlp12.webp'];
+                const imageSequence3 = ['img/Bi dashboard.png', 'img/Bi dashboard2.png', 'img/Bi dashboard3.png', 'img/Bi dashboard4.png'];
+                const imageSequence4 = ['poster/num1.webp', 'poster/num2.webp'];
+                // Function to change images
+                function changeImageOnHover(cardId, imgId, images) {
+                    let img = document.getElementById(imgId);
+                    let currentIndex = 0;
+                    let interval;
+            
+                    document.getElementById(cardId).addEventListener('mouseenter', function() {
+                        interval = setInterval(() => {
+                            img.src = images[currentIndex];
+                            currentIndex = (currentIndex + 1) % images.length;
+                        }, 1000); // Change image every 1000ms (1 second)
+                    });
+            
+                    document.getElementById(cardId).addEventListener('mouseleave', function() {
+                        clearInterval(interval);
+                        img.src = images[0]; // Reset to the first image
+                    });
+                }
+            
+                // Initialize the hover effect for each card
+                changeImageOnHover('workCard1', 'workImg1', imageSequence1);
+                changeImageOnHover('workCard2', 'workImg2', imageSequence2);
+                changeImageOnHover('workCard3', 'workImg3', imageSequence3);
+                changeImageOnHover('workCard4', 'workImg4', imageSequence4);
+            });
+
+            
+            document.querySelectorAll('.nav__link').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    
+                    const targetId = this.getAttribute('href').substring(1); // Get section ID from href
+                    const targetSection = document.getElementById(targetId);
+                    
+                    // Fallback if smooth scroll behavior isn't natively supported
+                    targetSection.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                });
+            });
+
+            </script>
+            
+            <script src="{{ url_for('static', filename='js/scrollreveal.min.js') }}"></script>
+
+            <!--=============== SWIPER JS ===============-->
+            <script src="{{ url_for('static', filename='js/swiper-bundle.min.js') }}"></script>
+    
+            <!--=============== MIXITUP FILTER ===============-->
+            <script src="{{ url_for('static', filename='js/mixitup.min.js') }}"></script>
+    
+            <!--=============== MAIN JS ===============-->
+            <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+        
+    </body>
+    <script>
+        const fileInput = document.getElementById('file_input');
+        const fileList = document.getElementById('fileList');
+        const fileInputContainer = document.getElementById('fileInputContainer');
+        const filePreviewBox = document.getElementById('filePreviewBox');
+        const previewFiles = document.getElementById('previewFiles');
+        
+        fileInput.addEventListener('change', function(e) {
+            updateFilePreview(this.files);
+            fileList.innerHTML = '';
+            
+            if (this.files.length > 0) {
+                fileInputContainer.classList.add('has-files');
+                document.querySelector('.file-input-hint').textContent = 
+                    `${this.files.length} ${this.files.length === 1 ? 'file' : 'files'} selected`;
+            } else {
+                fileInputContainer.classList.remove('has-files');
+                document.querySelector('.file-input-hint').textContent = 
+                    'Choose files or drag & drop them here';
+            }
+        });
+
+        function updateFilePreview(files) {
+            previewFiles.innerHTML = '';
+            if (files.length > 0) {
+                filePreviewBox.style.display = 'block';
+                Array.from(files).forEach((file, index) => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'preview-file-item';
+                    
+                    const fileIcon = document.createElement('i');
+                    fileIcon.className = 'bx bxs-file-pdf';
+                    
+                    const fileName = document.createElement('span');
+                    fileName.textContent = file.name;
+                    
+                    const removeBtn = document.createElement('span');
+                    removeBtn.className = 'remove-preview';
+                    removeBtn.innerHTML = '&times;';
+                    removeBtn.onclick = (e) => removeFileAtIndex(index, e);
+                    
+                    fileItem.appendChild(fileIcon);
+                    fileItem.appendChild(fileName);
+                    fileItem.appendChild(removeBtn);
+                    previewFiles.appendChild(fileItem);
+                });
+            } else {
+                filePreviewBox.style.display = 'none';
+            }
+        }
+        
+        function removeFileAtIndex(index, event) {
+            event.stopPropagation();
+            
+            const dt = new DataTransfer();
+            const files = Array.from(fileInput.files);
+            
+            files.splice(index, 1);
+            
+            files.forEach(file => dt.items.add(file));
+            fileInput.files = dt.files;
+            
+            updateFilePreview(fileInput.files);
+            const changeEvent = new Event('change');
+            fileInput.dispatchEvent(changeEvent);
+        }
+        
+        // Handle drag and drop
+        fileInputContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileInputContainer.style.borderColor = 'var(--first-color)';
+            fileInputContainer.style.backgroundColor = 'hsla(var(--first-hue), var(--sat), var(--lig), 0.2)';
+        });
+        
+        fileInputContainer.addEventListener('dragleave', () => {
+            fileInputContainer.style.borderColor = fileInput.files.length > 0 ? 
+                'var(--first-color)' : 'var(--text-color-light)';
+            fileInputContainer.style.backgroundColor = fileInput.files.length > 0 ? 
+                'hsla(var(--first-hue), var(--sat), var(--lig), 0.1)' : 'var(--container-color)';
+        });
+        
+        fileInputContainer.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileInput.files = e.dataTransfer.files;
+            const event = new Event('change');
+            fileInput.dispatchEvent(event);
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const linksInput = document.getElementById('links_input');
+            const linksContainer = document.getElementById('linksContainer');
+            const allLinksHidden = document.getElementById('allLinksHidden');
+            const contactForm = document.querySelector('.contact__form');
+    
+            // Function to add a new link
+            function addLink(linkUrl) {
+                if (!linkUrl.trim()) return;
+    
+                // Create link item element
+                const linkItem = document.createElement('div');
+                linkItem.className = 'link-item';
+                
+                // Create link text element
+                const linkText = document.createElement('span');
+                linkText.className = 'link-text';
+                linkText.textContent = linkUrl;
+                
+                // Create delete button
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.innerHTML = '&times;'; // Cross icon
+                deleteBtn.title = 'Remove this link';
+                
+                // Add click event to delete button
+                deleteBtn.addEventListener('click', function() {
+                    linkItem.remove();
+                    updateHiddenField();
+                });
+                
+                // Append elements
+                linkItem.appendChild(linkText);
+                linkItem.appendChild(deleteBtn);
+                linksContainer.appendChild(linkItem);
+                
+                // Clear input
+                linksInput.value = '';
+                
+                // Update hidden field
+                updateHiddenField();
+            }
+    
+            // Function to update the hidden field with all links
+            function updateHiddenField() {
+                const links = Array.from(document.querySelectorAll('.link-text')).map(el => el.textContent);
+                allLinksHidden.value = JSON.stringify(links);
+            }
+    
+            // Handle Enter key in input field
+            linksInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addLink(this.value);
+                }
+            });
+    
+            // Update hidden field before form submission
+            contactForm.addEventListener('submit', function() {
+                updateHiddenField();
+            });
+    
+            // Optional: Allow pasting multiple links separated by newlines
+            linksInput.addEventListener('paste', function(e) {
+                setTimeout(() => {
+                    const pastedText = this.value;
+                    if (pastedText.includes('\n')) {
+                        const links = pastedText.split('\n').filter(link => link.trim());
+                        links.forEach(link => addLink(link.trim()));
+                        this.value = '';
+                    }
+                }, 0);
+            });
+        });
+    </script>
+    <script>
+        // Add this to your existing JavaScript
+        async function deleteDocument(docId, ragId) {
+            if (!confirm('Are you sure you want to delete this document?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/rag/${ragId}/delete_document/${docId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    // Remove the document item from the UI
+                    const docElement = document.querySelector(`.document-item[data-doc-id="${docId}"]`);
+                    if (docElement) {
+                        docElement.remove();
+                    }
+
+                    // If no documents left, hide the section
+                    const documentsContainer = document.querySelector('.documents-container');
+                    if (documentsContainer && documentsContainer.children.length === 0) {
+                        document.querySelector('.document-list-section').style.display = 'none';
+                    }
+                } else {
+                    alert('Failed to delete document. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error deleting document:', error);
+                alert('Error deleting document. Please try again.');
+            }
+        }
+    </script>
+</html>

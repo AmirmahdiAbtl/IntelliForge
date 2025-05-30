@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <meta charset="UTF-8" />
+  <title>Chat</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/stylechat.css') }}">
+
+</head>
+
+<body>
+  <main class="main-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+      <!-- Header with title and new-chat button -->
+      <div class="sidebar-header">
+        <span class="sidebar-title">IntelliForge</span>
+        <button class="new-chat-btn" onclick="createNewChat()">
+          <span class="btn-icon">+</span>
+          <span class="btn-text">New</span>
+        </button>
+      </div>
+
+      <!-- List of chats -->
+      <ul id="sidebarList" class="sidebar-list">
+        {% for chat in chats %}
+        <li class="sidebar-item" onclick="selectChat({{chat[0]}})">
+          {{ chat[1] }}
+        </li>
+        {% endfor %}
+      </ul>
+
+      <!-- Footer with dark/light toggle and partial hide toggle -->
+      <div class="sidebar-footer">
+        <button class="toggle-mode-btn" onclick="toggleDarkMode()">
+          <svg class="dark-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+               fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+          <svg class="light-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+               fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </button>
+
+        <button class="config-btn" onclick="toggleConfigModal()" title="Model Configuration">
+          <i class="fas fa-cog" style="font-size: 20px;"></i>
+        </button>
+
+        <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Partial Hide Sidebar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+               fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Configuration Modal -->
+    <div id="configModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Model Configuration</h2>
+          <span class="close-btn" onclick="toggleConfigModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+          <!-- Tabs -->
+          <div class="tabs">
+            <button class="tab-btn active" onclick="openTab(event, 'groq-tab')">Groq</button>
+            <button class="tab-btn" onclick="openTab(event, 'ollama-tab')">Ollama</button>
+            <button class="tab-btn" onclick="openTab(event, 'gpt-tab')">GPT</button>
+          </div>
+
+          <!-- Groq Tab -->
+          <div id="groq-tab" class="tab-content active">
+            <div class="config-item">
+              <label for="groqApiKey">API Key:</label>
+              <input type="password" id="groqApiKey" class="config-input" placeholder="Enter your Groq API key">
+            </div>
+            <div class="config-item">
+              <label for="groqModel">Model:</label>
+              <input type="text" id="groqModel" class="config-input" placeholder="Enter model name">
+            </div>
+            <div class="config-item">
+              <label for="groqTemperature">Temperature:</label>
+              <input type="range" id="groqTemperature" min="0" max="1" step="0.1" value="0.7" class="config-input">
+              <span id="groqTemperatureValue">0.7</span>
+            </div>
+          </div>
+
+          <!-- Ollama Tab -->
+          <div id="ollama-tab" class="tab-content">
+            <div class="config-item">
+              <label for="ollamaModel">Model:</label>
+              <select id="ollamaModel" class="config-input">
+                {% for model in model_list %}
+                    <option value={{model}}>{{ model }}</option>
+                {% endfor %}
+              </select>
+              
+            </div>
+            <div class="config-item">
+              <label for="ollamaTemperature">Temperature:</label>
+              <input type="range" id="ollamaTemperature" min="0" max="1" step="0.1" value="0.7" class="config-input">
+              <span id="ollamaTemperatureValue">0.7</span>
+            </div>
+          </div>
+
+          <!-- GPT Tab -->
+          <div id="gpt-tab" class="tab-content">
+            <div class="config-item">
+              <label for="gptApiKey">API Key:</label>
+              <input type="password" id="gptApiKey" class="config-input" placeholder="Enter your OpenAI API key">
+            </div>
+            <div class="config-item">
+              <label for="gptModel">Model:</label>
+              <select id="gptModel" class="config-input">
+                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                <option value="gpt-4">GPT-4</option>
+                <option value="gpt-4-turbo">GPT-4 Turbo</option>
+              </select>
+            </div>
+            <div class="config-item">
+              <label for="gptTemperature">Temperature:</label>
+              <input type="range" id="gptTemperature" min="0" max="1" step="0.1" value="0.7" class="config-input">
+              <span id="gptTemperatureValue">0.7</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button onclick="saveConfig()" class="save-btn">Save Configuration</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Section -->
+    <section class="chat-section">
+      <div style="overflow-y: auto;" id="chatWindow" class="chat-window">
+        <!-- Messages dynamically inserted here -->
+      </div>
+      <div class="input-bar">
+        <form onsubmit="sendMessage(event)" class="form-container">
+            <label for="userInput" class="input-label"></label>
+            <!-- <input type="hidden" name="rag_id" id="hiddenRagId" value="{{ rag_id }}"> -->
+            <div class="input-wrapper">
+              <textarea
+                id="userInput"
+                class="input-field"
+                rows="2"
+                placeholder="Type your message... (Enter to send, Shift+Enter for newline)"
+              ></textarea>
+              <button type="submit" id="sendButton" class="send-btn">
+                <i class="fas fa-paper-plane" style="font-size: 18px; color: var(--color-text);"></i>
+              </button>
+            </div>
+            <input type="hidden" id="hiddenChatId" value="" />
+          </form>          
+      </div>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  
+  <script>
+    // Handle Enter/Shift+Enter in textarea
+    const textarea = document.getElementById('userInput');
+    
+    textarea.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        if (e.shiftKey) {
+          return; // Allow newline with Shift+Enter
+        } else {
+          e.preventDefault(); // Prevent default Enter behavior
+          document.querySelector('form').requestSubmit(); // Submit the form
+        }
+      }
+    });
+
+    // Auto-resize textarea
+    textarea.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+    });
+  </script>
+  
+  <script src="{{ url_for('static', filename='js/regularchat.js') }}"></script>
+
+</body>
+</html>

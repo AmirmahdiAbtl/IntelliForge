@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <meta charset="UTF-8" />
+  <title>
+    {% if chat %}
+      {{chat[2]}}
+    {% else %}
+      Chat RAG
+    {% endif %}
+  </title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/stylechat.css') }}">
+  <style>
+    .message-success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+    }
+
+    .input-field:disabled {
+        cursor: not-allowed;
+        background-color: var(--color-secondary);
+    }
+
+    .send-btn:disabled {
+        cursor: not-allowed;
+    }
+
+    .input-field:disabled,
+    .send-btn:disabled {
+        transition: opacity 0.3s ease;
+    }
+
+    /* Thinking dropdown styles */
+    .thinking-dropdown {
+        margin-bottom: 10px;
+        border: 1px solid var(--color-border);
+        border-radius: 5px;
+        overflow: hidden;
+    }
+
+    .thinking-header {
+        background-color: var(--color-secondary);
+        padding: 8px 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        user-select: none;
+    }
+
+    .thinking-header:hover {
+        background-color: var(--color-hover);
+    }
+
+    .thinking-content {
+        padding: 12px;
+        background-color: var(--color-background);
+        border-top: 1px solid var(--color-border);
+        display: none;
+    }
+
+    .thinking-content.show {
+        display: block;
+    }
+
+    .thinking-toggle {
+        transition: transform 0.3s ease;
+    }
+
+    .thinking-toggle.rotated {
+        transform: rotate(180deg);
+    }
+
+    /* Code block styles */
+    pre {
+        background-color: var(--color-secondary);
+        padding: 1em;
+        border-radius: 5px;
+        overflow-x: auto;
+        margin: 1em 0;
+    }
+
+    code {
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 0.9em;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="main-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+      <!-- Header with title and new-chat button -->
+      <div class="sidebar-header">
+        <span class="sidebar-title">IntelliForge</span>
+        <button class="new-chat-btn" onclick="createNewChat()">
+          <span class="btn-icon">+</span>
+          <span class="btn-text">New</span>
+        </button>
+      </div>
+
+      <!-- List of chats -->
+      <ul id="sidebarList" class="sidebar-list">
+        {% for chat in chats %}
+        {% if 'Initial Session' not in chat[2] %}
+          <li class="sidebar-item" onclick="selectChat({{ chat[0] }})">
+            {{ chat[2] }}
+          </li>
+        {% endif %}
+      {% endfor %}
+      </ul>
+
+      <!-- Footer with dark/light toggle and partial hide toggle -->
+      <div class="sidebar-footer">
+        <button class="toggle-mode-btn" onclick="toggleDarkMode()">
+          <svg class="dark-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+               fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+          <svg class="light-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+               fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </button>
+
+        <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Partial Hide Sidebar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+               fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Chat Section -->
+    <section class="chat-section">
+      <div style="overflow-y: auto;" id="chatWindow" class="chat-window">
+        <!-- Messages dynamically inserted here -->
+      </div>
+      <div class="input-bar">
+        <form onsubmit="sendMessage(event)" class="form-container">
+            <label for="userInput" class="input-label"></label>
+            <input type="hidden" name="rag_id" id="hiddenRagId" value="{{ rag_id }}">
+            <div class="input-wrapper">
+              <textarea
+                id="userInput"
+                class="input-field"
+                rows="2"
+                placeholder="Type your message... (Enter to send, Shift+Enter for newline)"
+              ></textarea>
+              <button type="submit" id="sendButton" class="send-btn">
+                <i class="fas fa-paper-plane" style="font-size: 18px; color: var(--color-text);"></i>
+              </button>
+            </div>
+            <input type="hidden" id="hiddenChatId" value="" />
+          </form>          
+      </div>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  
+  <!-- <script>
+    const textarea = document.getElementById('userInput');
+    
+    textarea.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+    });
+
+    const originalForm = document.querySelector('form').onsubmit;
+    document.querySelector('form').onsubmit = function(e) {
+      originalForm(e);
+      setTimeout(() => {
+        // textarea.style.height = '24px';
+      }, 0);
+    };
+  </script> -->
+  
+  <script src="{{ url_for('static', filename='js/scriptchat.js') }}"></script>
+
+</body>
+</html>
