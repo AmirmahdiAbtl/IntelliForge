@@ -30,16 +30,12 @@ modalClose.forEach((mc) => {
     })
 })
 /*=============== MIXITUP FILTER FOR FORMS ===============*/
-/*=============== MIXITUP FILTER FOR FORMS ===============*/
 var mixerForms = mixitup(".form__container", {
     selectors: {
         target: '.form__section'
     },
     animation: {
         duration: 300
-    },
-    load: {
-        filter: '.form-a' // This will show only Form A on page load
     }
 });
 
@@ -52,6 +48,15 @@ function activeFormTab() {
 }
 
 formTabs.forEach(tab => tab.addEventListener("click", activeFormTab));
+
+// Trigger mixitup filter on page load based on active tab
+document.addEventListener('DOMContentLoaded', function() {
+    const activeTab = document.querySelector('.work__item.active-work');
+    if (activeTab) {
+        const filter = activeTab.getAttribute('data-filter');
+        mixerForms.filter(filter);
+    }
+});
 /*=============== SWIPER TESTIMONIAL ===============*/
 var swiperTestimonial = new Swiper(".testimonial__container", {
     spaceBetween: 24,

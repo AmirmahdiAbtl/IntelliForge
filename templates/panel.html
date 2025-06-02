@@ -65,9 +65,14 @@
                         <div class="services__status">Status: {{ rag.status }}</div>
                         <div class="services__actions">
                             {% if rag.status == 'ready' %}
-                            <span class="services__button" onclick="window.location.href='{{ url_for('developerassistant.chat_with_rag', rag_id=rag.id) }}'">
-                                Chat <i class='bx bx-message-alt-detail services__icon' ></i>
-                            </span>
+                            <div style = "display: flex; flex-direction: row; justify-content: space-between;">
+                                <span class="services__button" onclick="window.location.href='{{ url_for('developerassistant.chat_with_rag', rag_id=rag.id) }}'">
+                                    Chat <i class='bx bx-message-alt-detail services__icon' ></i>
+                                </span>
+                                <span class="services__button" onclick="window.location.href='{{ url_for('rag_creator.rag_details', rag_id=rag.id) }}'">
+                                    Info and change <i class="fa-solid fa-circle-info services__icon"></i>
+                                </span>
+                            </div>
                             {% else %}
                             <span class="services__button" onclick="window.location.href='{{ url_for('rag_creator.rag_details', rag_id=rag.id) }}'">
                                 Continue Setup <i class='bx bx-cog services__icon' ></i>

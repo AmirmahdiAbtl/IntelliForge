@@ -6,7 +6,31 @@
   <meta charset="UTF-8" />
   <title>Chat</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/stylechat.css') }}">
+  <style>
+    /* Code block styles */
+    pre {
+        background-color: var(--color-secondary);
+        padding: 1em;
+        border-radius: 5px;
+        overflow-x: auto;
+    }
 
+    code {
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 0.9em;
+    }
+
+    .styled-link {
+      color: #007BFF;       /* Link color */
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+    }
+
+    .styled-link:hover {
+      color: #0056b3;
+    }
+
+  </style>
 </head>
 
 <body>
@@ -16,7 +40,7 @@
 
       <!-- Header with title and new-chat button -->
       <div class="sidebar-header">
-        <span class="sidebar-title">IntelliForge</span>
+        <a href="/" class="nav__logo" style="text-decoration: none; ">IntelliForge</a>
         <button class="new-chat-btn" onclick="createNewChat()">
           <span class="btn-icon">+</span>
           <span class="btn-text">New</span>
@@ -93,7 +117,10 @@
               <input type="password" id="groqApiKey" class="config-input" placeholder="Enter your Groq API key">
             </div>
             <div class="config-item">
-              <label for="groqModel">Model:</label>
+              <div style="display: flex; flex-direction: row; justify-content: space-between;">
+                <label for="groqModel">Model:</label>
+                <a  target="_blank" rel="noopener noreferrer" class="styled-link" href="https://console.groq.com/docs/models"> Model List </a>
+              </div>
               <input type="text" id="groqModel" class="config-input" placeholder="Enter model name">
             </div>
             <div class="config-item">
@@ -156,14 +183,22 @@
       <div class="input-bar">
         <form onsubmit="sendMessage(event)" class="form-container">
             <label for="userInput" class="input-label"></label>
-            <!-- <input type="hidden" name="rag_id" id="hiddenRagId" value="{{ rag_id }}"> -->
             <div class="input-wrapper">
+              <div id="selectedImagePreview" style="display: none; width: 100%; margin-bottom: 6px; padding: 4px 0; background: none; border-radius: 8px; max-height: 90px; overflow-x: auto; overflow-y: hidden;">
+                <div id="imageGrid" style="display: flex; flex-direction: row; gap: 8px; align-items: center;">
+                  <!-- Images will be added here dynamically -->
+                </div>
+              </div>
               <textarea
                 id="userInput"
                 class="input-field"
                 rows="2"
                 placeholder="Type your message... (Enter to send, Shift+Enter for newline)"
               ></textarea>
+              <!-- <input type="file" id="imageInput" accept="image/*" multiple style="display: none;">
+              <button type="button" id="imageButton" class="image-btn" onclick="document.getElementById('imageInput').click()">
+                <i class="fas fa-image" style="font-size: 18px; color: var(--color-text);"></i>
+              </button> -->
               <button type="submit" id="sendButton" class="send-btn">
                 <i class="fas fa-paper-plane" style="font-size: 18px; color: var(--color-text);"></i>
               </button>
@@ -178,6 +213,7 @@
   <script>
     // Handle Enter/Shift+Enter in textarea
     const textarea = document.getElementById('userInput');
+    let selectedImages = [];
     
     textarea.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') {
@@ -194,6 +230,108 @@
     textarea.addEventListener('input', function() {
       this.style.height = 'auto';
       this.style.height = (this.scrollHeight) + 'px';
+    });
+
+    // Handle image selection
+    document.getElementById('imageInput').addEventListener('change', function(e) {
+      const files = Array.from(e.target.files);
+      if (files.length > 0) {
+        files.forEach(file => {
+          selectedImages.push(file);
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            const imageGrid = document.getElementById('imageGrid');
+            const imageContainer = document.createElement('div');
+            imageContainer.style.position = 'relative';
+            imageContainer.style.width = '150px';
+            imageContainer.style.height = '150px';
+            
+            const img = document.createElement('img');
+            img.src = event.target.result;
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            img.style.borderRadius = '8px';
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+            removeBtn.style.position = 'absolute';
+            removeBtn.style.top = '5px';
+            removeBtn.style.right = '5px';
+            removeBtn.style.padding = '5px';
+            removeBtn.style.background = 'var(--color-primary)';
+            removeBtn.style.border = 'none';
+            removeBtn.style.borderRadius = '50%';
+            removeBtn.style.cursor = 'pointer';
+            removeBtn.style.color = 'white';
+            removeBtn.style.width = '24px';
+            removeBtn.style.height = '24px';
+            removeBtn.style.display = 'flex';
+            removeBtn.style.alignItems = 'center';
+            removeBtn.style.justifyContent = 'center';
+            
+            removeBtn.onclick = function() {
+              const index = selectedImages.indexOf(file);
+              if (index > -1) {
+                selectedImages.splice(index, 1);
+              }
+              imageContainer.remove();
+              if (selectedImages.length === 0) {
+                document.getElementById('selectedImagePreview').style.display = 'none';
+              }
+            };
+            
+            imageContainer.appendChild(img);
+            imageContainer.appendChild(removeBtn);
+            imageGrid.appendChild(imageContainer);
+            document.getElementById('selectedImagePreview').style.display = 'block';
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+    });
+
+    // Function to remove all selected images
+    function removeSelectedImage() {
+      selectedImages = [];
+      document.getElementById('imageInput').value = '';
+      document.getElementById('selectedImagePreview').style.display = 'none';
+      document.getElementById('imageGrid').innerHTML = '';
+    }
+
+    // Modify the form submission to include all images
+    document.querySelector('form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const message = document.getElementById('userInput').value;
+      const chatId = document.getElementById('hiddenChatId').value;
+      
+      const formData = new FormData();
+      formData.append('message', message);
+      formData.append('chat_id', chatId);
+      selectedImages.forEach((image, index) => {
+        formData.append(`image_${index}`, image);
+      });
+
+      // Send the message and images to the server
+      fetch('/send_message', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Clear the input and images
+          document.getElementById('userInput').value = '';
+          removeSelectedImage();
+          // Handle the response (update chat window, etc.)
+          // ... your existing message handling code ...
+        } else {
+          console.error('Failed to send message:', data.error);
+        }
+      })
+      .catch(error => {
+        console.error('Error sending message:', error);
+      });
     });
   </script>
   

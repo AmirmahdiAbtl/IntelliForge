@@ -83,7 +83,6 @@
         padding: 1em;
         border-radius: 5px;
         overflow-x: auto;
-        margin: 1em 0;
     }
 
     code {
@@ -100,7 +99,7 @@
 
       <!-- Header with title and new-chat button -->
       <div class="sidebar-header">
-        <span class="sidebar-title">IntelliForge</span>
+        <a href="{{ url_for('panel') }}"class="nav__logo" style="text-decoration: none; ">IntelliForge</a>
         <button class="new-chat-btn" onclick="createNewChat()">
           <span class="btn-icon">+</span>
           <span class="btn-text">New</span>

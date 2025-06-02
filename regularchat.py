@@ -1,6 +1,7 @@
 import os
 import sqlite3
 from datetime import datetime
+import time
 from flask import Blueprint, render_template, request, jsonify
 from langchain.prompts import PromptTemplate
 from utils import get_retrieval_chain, get_llm, generate_embedding, name_generator
@@ -17,6 +18,9 @@ def generate_story():
         try:
             user_input = request.form.get('userInput', '').strip()
             chat_id = request.form.get('chat_id', None)
+
+            # Start timing the response generation
+            start_time = time.time()
 
             # Check if chat exists and has configuration
             with sqlite3.connect('database.db') as conn:
@@ -62,7 +66,7 @@ def generate_story():
             with sqlite3.connect('database.db') as conn:
                 cursor = conn.cursor()
                 cursor.execute(
-                    '''SELECT prompt, chat_response, embedding
+                    '''SELECT prompt, chat_response, embedding, language_model, model_type
                     FROM regular_chat_detail
                     WHERE chat_id = ?
                     ORDER BY time ASC''',
@@ -139,7 +143,16 @@ def generate_story():
             chat_chain = LLMChain(llm=llm, prompt=prompt_template) 
 
             response = chat_chain.run(chat_history=formatted_chat_history, question=user_input)
-            print(response)
+            
+            # Calculate execution time
+            execution_time = int((time.time() - start_time) * 1000)  # Convert to milliseconds
+            
+            # Calculate response length
+            response_length = len(response)
+            
+            # Get current timestamp
+            generated_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
             embedding_vec = generate_embedding(f"{response}, {user_input}")
             embedding_json = json.dumps(embedding_vec)
 
@@ -149,13 +162,26 @@ def generate_story():
                 cursor = conn.cursor()
                 cursor.execute(
                     '''INSERT INTO regular_chat_detail
-                    (chat_id, prompt, chat_response, time, embedding)
-                    VALUES (?, ?, ?, ?, ?)''',
-                    (chat_id, user_input, response, timestamp, embedding_json)
+                    (chat_id, prompt, chat_response, time, embedding, model_type, language_model, 
+                     response_length, execution_time, generated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                    (chat_id, user_input, response, timestamp, embedding_json, configuration[0][0], 
+                     configuration[0][1], response_length, execution_time, generated_at)
                 )
                 conn.commit()
 
-            return jsonify({"response": response, "chat_id": chat_id})
+            # Create response metadata
+            response_metadata = {
+                'response_length': response_length,
+                'execution_time': execution_time,
+                'generated_at': generated_at
+            }
+
+            return jsonify({
+                "response": response, 
+                "chat_id": chat_id,
+                "response_metadata": response_metadata
+            })
 
         except Exception as e:
             return jsonify({"error": str(e)}), 500
@@ -179,7 +205,6 @@ def generate_story():
 def get_chat(chat_id):
     """Fetch chat history by chat_id."""
     try:
-        print("Here i am")
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
             cursor.execute(
@@ -190,7 +215,8 @@ def get_chat(chat_id):
             chat_name = cursor.fetchone()
 
             cursor.execute(
-                '''SELECT prompt, chat_response
+                '''SELECT prompt, chat_response, model_type, language_model,
+                          response_length, execution_time, generated_at
                    FROM regular_chat_detail
                    WHERE chat_id = ?
                    ORDER BY time ASC''',
@@ -201,7 +227,21 @@ def get_chat(chat_id):
         if chat_name is None:
             return jsonify({"error": "Chat not found"}), 404
 
-        return jsonify({"chat_name": chat_name[0], "chat_details": chat_details})
+        # Format chat details to include metadata
+        formatted_details = []
+        for detail in chat_details:
+            prompt, response, model_type, language_model, response_length, execution_time, generated_at = detail
+            response_metadata = {
+                'response_length': response_length,
+                'execution_time': execution_time,
+                'generated_at': generated_at
+            }
+            formatted_details.append([prompt, response, model_type, language_model, response_metadata])
+
+        return jsonify({
+            "chat_name": chat_name[0], 
+            "chat_details": formatted_details
+        })
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -315,4 +355,49 @@ def get_model_config():
             
     except Exception as e:
         print(f"Error getting model config: {str(e)}")
+        return jsonify({'error': str(e)}), 400
+    
+@regular_chat_bp.route('/get_chat_config')
+def get_chat_config():
+    try:
+        chat_id = request.args.get('chat_id')
+        if not chat_id:
+            return jsonify({'error': 'Chat ID not provided'}), 400
+            
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get the latest message configuration from regular_chat_detail
+        cursor.execute('''
+            SELECT language_model, model_type
+            FROM regular_chat_detail
+            WHERE chat_id = ?
+            ORDER BY time DESC
+            LIMIT 1
+        ''', (chat_id,))
+        
+        config = cursor.fetchone()
+        
+        # If no message exists yet, get the default configuration from regular_chat_season
+        if not config:
+            cursor.execute('''
+                SELECT language_model, model_type, api_key 
+                FROM regular_chat_season 
+                WHERE id = ?
+            ''', (chat_id,))
+            config = cursor.fetchone()
+        
+        conn.close()
+        
+        if config:
+            return jsonify({
+                'language_model': config[0],
+                'model_type': config[1],
+                'api_key': config[2] if len(config) > 2 else None
+            })
+        else:
+            return jsonify({})  # Return empty object if no config exists
+            
+    except Exception as e:
+        print(f"Error getting chat config: {str(e)}")
         return jsonify({'error': str(e)}), 400

@@ -5,7 +5,6 @@ function toggleDarkMode() {
   const isDark = html.classList.contains('dark');
   localStorage.setItem('theme', isDark ? 'dark' : 'light');
 }
-
 // On page load, load local settings
 document.addEventListener('DOMContentLoaded', () => {
  const savedTheme = localStorage.getItem('theme') || 'light';
@@ -60,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // Replace your appendMessage function with this:
-function appendMessage(content, classes) {
+function appendMessage(content, classes, model_type = null, language_model = null, response_metadata = null) {
  const chatWindow = document.getElementById('chatWindow');
  const messageDiv = document.createElement('div');
  messageDiv.className = `message-bubble ${classes}`;
@@ -155,7 +154,65 @@ function appendMessage(content, classes) {
 
  messageDiv.appendChild(contentWrapper);
 
- // ✅ Add full message copy button here
+ // Add model info and copy button container
+ const actionContainer = document.createElement('div');
+ actionContainer.className = 'message-actions';
+
+ // Add model info if it's an incoming message
+ if (classes === 'message-incoming') {
+   const modelInfo = document.createElement('span');
+   modelInfo.className = 'model-info';
+   if (model_type && language_model) {
+     modelInfo.textContent = `${model_type} - ${language_model}`;
+   }
+   actionContainer.appendChild(modelInfo);
+
+   // Add info button if we have response metadata
+   if (response_metadata) {
+     const infoBtn = document.createElement('button');
+     infoBtn.className = 'info-btn';
+     infoBtn.innerHTML = '<i class="fas fa-info-circle"></i>';
+     infoBtn.title = 'Response Details';
+     
+     // Create popup
+     const popup = document.createElement('div');
+     popup.className = 'response-info-popup';
+     popup.innerHTML = `
+       <div class="popup-content">
+         <h3>Response Details</h3>
+         <div class="popup-details">
+           <p><strong>Response Length:</strong> ${response_metadata.response_length} characters</p>
+           <p><strong>Execution Time:</strong> ${response_metadata.execution_time}ms</p>
+           <p><strong>Generated At:</strong> ${response_metadata.generated_at}</p>
+         </div>
+         <button class="close-popup-btn">&times;</button>
+       </div>
+     `;
+
+     // Add click handler for info button
+     infoBtn.addEventListener('click', (e) => {
+       e.stopPropagation();
+       popup.style.display = 'block';
+     });
+
+     // Add click handler for close button
+     popup.querySelector('.close-popup-btn').addEventListener('click', () => {
+       popup.style.display = 'none';
+     });
+
+     // Close popup when clicking outside
+     document.addEventListener('click', (e) => {
+       if (!popup.contains(e.target) && e.target !== infoBtn) {
+         popup.style.display = 'none';
+       }
+     });
+
+     actionContainer.appendChild(infoBtn);
+     document.body.appendChild(popup);
+   }
+ }
+
+ // Add full message copy button
  const fullCopyBtn = document.createElement('button');
  fullCopyBtn.className = 'copy-full-btn';
  fullCopyBtn.innerHTML = '<i class="fas fa-copy"></i>';
@@ -173,7 +230,8 @@ function appendMessage(content, classes) {
    });
  });
 
- messageDiv.appendChild(fullCopyBtn); // Add the button outside the content wrapper
+ actionContainer.appendChild(fullCopyBtn);
+ messageDiv.appendChild(actionContainer);
  chatWindow.appendChild(messageDiv);
  chatWindow.scrollTop = chatWindow.scrollHeight;
 }
@@ -192,9 +250,9 @@ async function selectChat(id) {
      if (data.error) {
        appendMessage(data.error, "message-error");
      } else {
-       data.chat_details.forEach(([prompt, resp]) => {
+       data.chat_details.forEach(([prompt, resp, model_type, language_model, response_metadata]) => {
          appendMessage(prompt, "message-outgoing");
-         appendMessage(resp, "message-incoming");
+         appendMessage(resp, "message-incoming", model_type, language_model, response_metadata);
        });
      }
    } else {
@@ -232,7 +290,7 @@ async function sendMessage(event) {
     // Check configuration before sending
     const isConfigured = await checkConfiguration(chatId);
     if (!isConfigured) {
-        appendMessage("Please configure the chat model before sending messages. Click the gear icon to configure.", "message-error");
+        appendTemporaryMessage("Please configure the chat model before sending messages. Click the gear icon to configure.", "message-error");
         toggleConfigModal();
         return;
     }
@@ -277,9 +335,12 @@ async function sendMessage(event) {
         const data = await response.json();
         
         if (response.ok) {
-            appendMessage(data.response, "message-incoming");
+            // Get the current model configuration for the new message
+            const configResponse = await fetch(`/regularchat/get_chat_config?chat_id=${chatId}`);
+            const config = await configResponse.json();
+            appendMessage(data.response, "message-incoming", config.model_type, config.language_model, data.response_metadata);
         } else {
-            appendMessage(data.error || 'Error sending message', "message-error");
+            appendTemporaryMessage(data.error || 'Error sending message', "message-error");
         }
     } catch (error) {
         // Remove "Answering..." message
@@ -287,7 +348,7 @@ async function sendMessage(event) {
         if (answeringMessage) {
             answeringMessage.remove();
         }
-        appendMessage('Server error sending message', "message-error");
+        appendTemporaryMessage('Server error sending message', "message-error");
     } finally {
         // Re-enable input and button
         userInput.disabled = false;
@@ -296,6 +357,21 @@ async function sendMessage(event) {
         userInput.style.opacity = '1';
         userInput.focus(); // Focus back on input
     }
+}
+
+// Add new function for temporary messages
+function appendTemporaryMessage(content, classes) {
+    const chatWindow = document.getElementById('chatWindow');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message-bubble ${classes} message-temporary`;
+    messageDiv.textContent = content;
+    chatWindow.appendChild(messageDiv);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+
+    // Remove the message after animation completes
+    setTimeout(() => {
+        messageDiv.remove();
+    }, 5000);
 }
 
 async function createNewChat() {
@@ -462,7 +538,7 @@ async function saveConfig() {
             toggleConfigModal();
             
             // Show success message
-            appendMessage("Chat configured successfully! You can now send messages.", "message-success");
+            appendTemporaryMessage("Chat configured successfully! You can now send messages.", "message-success");
             
             // Refresh the chat to ensure we have the latest configuration
             if (config.chat_id) {
@@ -470,11 +546,11 @@ async function saveConfig() {
             }
         } else {
             const errorData = await response.json();
-            appendMessage('Error saving configuration: ' + (errorData.error || 'Unknown error'), "message-error");
+            appendTemporaryMessage('Error saving configuration: ' + (errorData.error || 'Unknown error'), "message-error");
         }
     } catch (error) {
         console.error('Error:', error);
-        appendMessage('Failed to save configuration. Please try again.', "message-error");
+        appendTemporaryMessage('Failed to save configuration. Please try again.', "message-error");
     }
 }
 

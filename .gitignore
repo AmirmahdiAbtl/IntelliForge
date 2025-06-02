@@ -7,3 +7,4 @@ vectordb/
 
 # Ignore system files
 database.db
+Dockerfile

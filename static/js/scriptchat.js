@@ -67,19 +67,21 @@ function appendMessage(content, classes) {
      <span class="thinking-toggle">▼</span>
    `;
    
-   const content = document.createElement('div');
-   content.className = 'thinking-content';
+   const thinkingContent = document.createElement('div');
+   thinkingContent.className = 'thinking-content';
    
    // Extract content between think tags and parse markdown
-   const thinkingContent = content.match(/<think>([\s\S]*?)<\/think>/)[1];
-   content.innerHTML = marked.parse(thinkingContent);
+   const thinkingMatch = content.match(/<think>([\s\S]*?)<\/think>/);
+   if (thinkingMatch) {
+     thinkingContent.innerHTML = marked.parse(thinkingMatch[1]);
+   }
    
    thinkingDiv.appendChild(header);
-   thinkingDiv.appendChild(content);
+   thinkingDiv.appendChild(thinkingContent);
    
    // Add click handler for toggle
    header.addEventListener('click', () => {
-     content.classList.toggle('show');
+     thinkingContent.classList.toggle('show');
      header.querySelector('.thinking-toggle').classList.toggle('rotated');
    });
    

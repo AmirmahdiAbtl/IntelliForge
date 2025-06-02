@@ -28,8 +28,13 @@ def init_db():
                 prompt TEXT NOT NULL,
                 chat_response TEXT NOT NULL,
                 embedding BLOB NOT NULL,
+                model_type VARCHAR(50),
+                language_model TEXT,
                 time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (chat_id) REFERENCES chat_season(id) ON DELETE CASCADE
+                response_length INTEGER,
+                execution_time INTEGER,
+                generated_at TIMESTAMP,
+                FOREIGN KEY (chat_id) REFERENCES regular_chat_season(id) ON DELETE CASCADE
             )
         ''')
 
@@ -100,7 +105,6 @@ def init_db():
             )
         ''')
         
-
         conn.commit()
 
 def get_all_rags():
@@ -135,9 +139,10 @@ def update_rag(rag_id, data, status=None):
     values = []
     
     for field in allowed_fields:
-        if field in data and data[field] is not None:
+        if field in data and data[field] is not None and field != 'api_key':
             update_fields.append(f"{field} = ?")
             values.append(data[field])
+
     
     if status:
         update_fields.append("status = ?")
@@ -203,3 +208,66 @@ def get_chat_sessions_for_rag(rag_id):
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM chat_season WHERE rag_id = ? ORDER BY start_chat DESC', (rag_id,))
         return [dict(row) for row in cursor.fetchall()]
+
+def create_tables():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Create regular_chat_season table
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS regular_chat_season (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        language_model TEXT NOT NULL,
+        model_type TEXT NOT NULL,
+        api_key TEXT NOT NULL,
+        temperature REAL DEFAULT 0.7,
+        start_chat TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+
+    # Create regular_chat_detail table with new metadata fields
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS regular_chat_detail (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        chat_id INTEGER NOT NULL,
+        prompt TEXT NOT NULL,
+        chat_response TEXT NOT NULL,
+        time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        embedding TEXT,
+        model_type TEXT NOT NULL,
+        language_model TEXT NOT NULL,
+        response_length INTEGER,
+        execution_time INTEGER,
+        generated_at TIMESTAMP,
+        FOREIGN KEY (chat_id) REFERENCES regular_chat_season (id)
+    )
+    ''')
+
+    # Create rag table
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS rag (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        language_model TEXT NOT NULL,
+        model_type TEXT NOT NULL,
+        api_key TEXT NOT NULL,
+        temperature REAL DEFAULT 0.7,
+        start_chat TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+
+    # Create rag_documents table
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS rag_documents (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        rag_id INTEGER NOT NULL,
+        document_name TEXT NOT NULL,
+        document_content TEXT NOT NULL,
+        embedding TEXT,
+        FOREIGN KEY (rag_id) REFERENCES rag (id)
+    )
+    ''')
+
+    conn.commit()
+    conn.close()

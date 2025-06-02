@@ -35,7 +35,6 @@
             <div class="home__container container grid">
                 <section class="contact section" id="contact">
                     <h2 class="section__title">{{ rag.name }}</h2>
-                    <span class="section__subtitle">RAG Application Details</span>
             
                     <div class="contact__container container grid">
                         <div class="contact__content">
@@ -44,14 +43,26 @@
                                     <h3>Status: {{ rag.status }}</h3>
                                     
                                     <div class="rag-model-info">
-                                        <h4>Model Information</h4>
+                                        <div class="cont" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+                                            <h4>Model Information</h4>
+                                            <span class="services__button" onclick="window.location.href='{{ url_for('rag_creator.model_selection', rag_id=rag.id) }}'">
+                                                <i class="bx bx-cog services__icon"></i>
+                                            </span>
+                                        </div>
+
                                         <p><strong>Model Type:</strong> {{ rag.model_type or 'Not set' }}</p>
                                         <p><strong>Model Name:</strong> {{ rag.model_name or 'Not set' }}</p>
                                     </div>
                                     
                                     {% if rag.embedding_model %}
                                     <div class="rag-embedding-info">
-                                        <h4>Embedding & Vector Database</h4>
+                                        <div class="cont" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+                                            <h4>Embedding & Vector Database</h4>
+                                            <span class="services__button" onclick="window.location.href='{{ url_for('rag_creator.db_embedding_selection', rag_id=rag.id) }}'">
+                                                <i class="bx bx-cog services__icon"></i>
+                                            </span>
+                                        </div>
+                                        
                                         <p><strong>Embedding Model:</strong> {{ rag.embedding_model }}</p>
                                         <p><strong>Vector Database:</strong> {{ rag.vector_db }}</p>
                                         <p><strong>Chunk Size:</strong> {{ rag.chunk_size }}</p>
@@ -60,14 +71,22 @@
                                     
                                     {% if rag.project_purpose %}
                                     <div class="rag-purpose">
+                                        
                                         <h4>Project Purpose</h4>
+                                        
                                         <p>{{ rag.project_purpose }}</p>
                                     </div>
                                     {% endif %}
                                     
                                     {% if documents %}
                                     <div class="rag-documents">
-                                        <h4>Documents ({{ documents|length }})</h4>
+                                        
+                                        <div class="cont" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+                                            <h4>Documents ({{ documents|length }})</h4>
+                                            <span class="services__button" onclick="window.location.href='{{ url_for('rag_creator.documentation_upload', rag_id=rag.id) }}'">
+                                                <i class="bx bx-cog services__icon"></i>
+                                            </span>
+                                        </div>
                                         <ul class="document-list">
                                             {% for doc in documents %}
                                             <li>
@@ -92,7 +111,13 @@
                                     
                                     {% if rag.prompt_template %}
                                     <div class="rag-prompt">
-                                        <h4>Prompt Template</h4>
+                                        
+                                        <div class="cont" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+                                            <h4>Prompt Template</h4>
+                                            <span class="services__button" onclick="window.location.href='{{ url_for('rag_creator.prompt_template', rag_id=rag.id) }}'">
+                                            <i class="bx bx-cog services__icon"></i>
+                                            </span>
+                                        </div>
                                         <div class="prompt-template">
                                             <pre>{{ rag.prompt_template }}</pre>
                                         </div>

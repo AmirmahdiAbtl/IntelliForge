@@ -58,20 +58,20 @@
                                                 <div class="contact__form-div">
                                                     <label for="vector_db">Vector Database:</label>
                                                     <select name="vector_db" id="vector_db" required>
-                                                        <option value="faiss">FAISS</option>
-                                                        <option value="chroma">Chroma</option>
-                                                        <!-- <option value="pinecone">Pinecone</option> -->
+                                                        <option value="faiss" {% if rag.vector_db == 'faiss' %}selected{% endif %}>FAISS</option>
+                                                        <option value="chroma" {% if rag.vector_db == 'chroma' %}selected{% endif %}>Chroma</option>
+                                                        <!-- <option value="pinecone" {% if rag.vector_db == 'pinecone' %}selected{% endif %}>Pinecone</option> -->
                                                     </select>
                                                 </div>
                                                 <div class="contact__form-div">
                                                     <label for="chunk_size">Chunk Size:</label>
-                                                    <input type="number" name="chunk_size" id="chunk_size" value="500" min="100" max="4000" required>
+                                                    <input type="number" name="chunk_size" id="chunk_size" value= {% if rag.chunk_size %}{{rag.chunk_size}}{% else %} 500 {% endif %}  min="100" max="4000" required>
                                                     
                                                 </div>
                                                 <div class="contact__form-div">
                                                     <label for="project_purpose">Project Purpose:</label>
-                                                    <textarea name="project_purpose" id="project_purpose" rows="4" placeholder="Describe what this RAG application will be used for..."></textarea>
-                                                </div>
+                                                    <textarea name="project_purpose" id="project_purpose" rows="4" placeholder="Describe what this RAG application will be used for...">{% if rag.project_purpose %}{{ rag.project_purpose }}{% endif %}</textarea>
+                                                </div>                                                
                                                 <button style="width: 100%; margin-top: 3rem;" type="submit" class="button">Next Step</button>
                                             </form>
                                         </div>

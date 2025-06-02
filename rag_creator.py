@@ -34,7 +34,7 @@ def model_selection(rag_id):
         model_type = request.form.get('model_type')
         model_name = request.form.get('model_name')
         api_key = request.form.get('api_key')  # We might not store this in the DB but use it in the session
-        
+
         # Store API key in session if provided
         # try:
         #     if api_key:
@@ -49,7 +49,6 @@ def model_selection(rag_id):
             'model_name': model_name,
             'api_key': api_key,
         }
-        print(update_data)
         update_rag(rag_id, update_data, 'created')
         
         # Move to the next phase

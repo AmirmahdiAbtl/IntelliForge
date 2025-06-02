@@ -43,10 +43,10 @@
                         <div class="work__filters">
                             <!-- <span class="work__item mixitup-control-active active-work" data-filter="all">All</span> -->
                             
-                            <span class="work__item mixitup-control-active active-work" data-filter=".form-a">Groq</span>
-                            <span class="work__item" data-filter=".form-b">Ollama</span>
-                            <span class="work__item" data-filter=".form-c">Open AI</span>
-                            
+                            <span class="work__item {% if rag.model_type == 'GROQ' %}mixitup-control-active active-work{% endif %}" data-filter=".form-a">Groq</span>
+                            <span class="work__item {% if rag.model_type == 'Ollama' %}mixitup-control-active active-work{% endif %}" data-filter=".form-b">Ollama</span>
+                            <span class="work__item {% if rag.model_type == 'ChatGPT' %}mixitup-control-active active-work{% endif %}" data-filter=".form-c">Open AI</span>
+
                         </div>
 
                         <div class="form__container container">
@@ -61,11 +61,11 @@
                                                 <input type="hidden" name="model_type" value="GROQ">
                                                 <div class="contact__form-div">
                                                     <label for="api_key">API KEY:</label>
-                                                    <input type="text" name="api_key" id="api_key" required>
+                                                    <input type="password" name="api_key" id="api_key" required value={% if rag.api_key and rag.model_type == "GROQ" %}{{rag.api_key}}{% endif %}>
                                                 </div>
                                                 <div class="contact__form-div">
                                                     <label for="model_name">Model Name:</label>
-                                                    <input type="text" name="model_name" id="model_name" required>
+                                                    <input type="text" name="model_name" id="model_name" required value={% if rag.model_name and rag.model_type == "GROQ" %}{{rag.model_name}}{% endif %}>
                                                 </div>
                                                 <button style="width: 100%;" type="submit" class="button">Next Step</button>
                                             </form>
@@ -85,7 +85,7 @@
                                                     <label for="model_name">Model Name</label>
                                                     <select name="model_name" id="model_name" required>
                                                         {% for model in ollama_name %}
-                                                            <option value={{model}}>{{ model }}</option>
+                                                            <option value="{{ model }}" {% if rag.model_name == model and rag.model_type == "Ollama" %}selected{% endif %}>{{ model }}</option>
                                                         {% endfor %}
                                                     </select>
                                                 </div>
