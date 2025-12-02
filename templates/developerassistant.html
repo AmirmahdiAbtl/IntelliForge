@@ -77,6 +77,71 @@
         transform: rotate(180deg);
     }
 
+    /* Sources dropdown styles */
+    .sources-dropdown {
+        margin-top: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    .sources-header {
+        padding: 8px 12px;
+        background: rgba(59, 130, 246, 0.1);
+        border-radius: 7px 7px 0 0;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.9em;
+        color: #60a5fa;
+    }
+
+    .sources-header:hover {
+        background: rgba(59, 130, 246, 0.15);
+    }
+
+    .sources-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    .sources-content.show {
+        max-height: 300px;
+        padding: 10px 12px;
+    }
+
+    .sources-toggle {
+        transition: transform 0.3s ease;
+    }
+
+    .sources-toggle.rotated {
+        transform: rotate(180deg);
+    }
+
+    .sources-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .sources-list li {
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 0.85em;
+        line-height: 1.4;
+    }
+
+    .sources-list li:last-child {
+        border-bottom: none;
+    }
+
+    .sources-list strong {
+        color: #60a5fa;
+    }
+
     /* Code block styles */
     pre {
         background-color: var(--color-secondary);
@@ -99,7 +164,7 @@
 
       <!-- Header with title and new-chat button -->
       <div class="sidebar-header">
-        <a href="{{ url_for('panel') }}"class="nav__logo" style="text-decoration: none; ">IntelliForge</a>
+        <a href="{{ url_for('main.panel') }}"class="nav__logo" style="text-decoration: none; ">IntelliForge</a>
         <button class="new-chat-btn" onclick="createNewChat()">
           <span class="btn-icon">+</span>
           <span class="btn-text">New</span>
@@ -108,13 +173,11 @@
 
       <!-- List of chats -->
       <ul id="sidebarList" class="sidebar-list">
-        {% for chat in chats %}
-        {% if 'Initial Session' not in chat[2] %}
-          <li class="sidebar-item" onclick="selectChat({{ chat[0] }})">
-            {{ chat[2] }}
+        {% for session in sessions %}
+          <li class="sidebar-item" onclick="selectSession({{ session.id }})">
+            {{ session.session_name }}
           </li>
-        {% endif %}
-      {% endfor %}
+        {% endfor %}
       </ul>
 
       <!-- Footer with dark/light toggle and partial hide toggle -->
@@ -160,7 +223,7 @@
       <div class="input-bar">
         <form onsubmit="sendMessage(event)" class="form-container">
             <label for="userInput" class="input-label"></label>
-            <input type="hidden" name="rag_id" id="hiddenRagId" value="{{ rag_id }}">
+            <input type="hidden" name="rag_id" id="hiddenRagId" value="{{ rag.id }}">
             <div class="input-wrapper">
               <textarea
                 id="userInput"

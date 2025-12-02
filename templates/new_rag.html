@@ -21,7 +21,7 @@
     
     <header class="header" id="header">
         <nav class="nav container">
-            <a href="{{ url_for('panel') }}" class="nav__logo">IntelliForge</a>
+            <a href="{{ url_for('main.panel') }}" class="nav__logo">IntelliForge</a>
             
             </div>
             <!-- Change Theme Color -->
@@ -39,7 +39,7 @@
             
                     <div class="contact__container container grid">
                         <div class="contact__content">
-                            <form action="{{ url_for('rag_creator.create_new_rag') }}" method="POST" class="contact__form">
+                            <form action="{{ url_for('rag_creator.new_rag') }}" method="POST" class="contact__form">
                                 <div class="contact__form-div">
                                     <label for="rag_name">RAG Application Name:</label>
                                     <input type="text" name="rag_name" id="rag_name" placeholder="My RAG Application" required>

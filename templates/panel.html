@@ -23,7 +23,7 @@
         
         <header class="header" id="header">
             <nav class="nav container">
-                <a href="{{ url_for('panel') }}" class="nav__logo">IntelliForge</a>
+                <a href="{{ url_for('main.index') }}" class="nav__logo">IntelliForge</a>
                 
                 </div>
                 <!-- Change Theme Color -->
@@ -45,7 +45,7 @@
                     <div class="services__card">
                         <h3 class="services__title">Create New RAG</h3>
                         <p class="services__description">Create a new RAG application from scratch</p>
-                        <span class="services__button" onclick="window.location.href='{{ url_for('rag_creator.create_new_rag') }}'">
+                        <span class="services__button" onclick="window.location.href='{{ url_for('rag_creator.new_rag') }}'">
                             Create New <i class='bx bx-right-arrow-alt services__icon' ></i>
                         </span>
                     </div>
@@ -66,7 +66,7 @@
                         <div class="services__actions">
                             {% if rag.status == 'ready' %}
                             <div style = "display: flex; flex-direction: row; justify-content: space-between;">
-                                <span class="services__button" onclick="window.location.href='{{ url_for('developerassistant.chat_with_rag', rag_id=rag.id) }}'">
+                                <span class="services__button" onclick="window.location.href='{{ url_for('rag_creator.rag_chat', rag_id=rag.id) }}'">
                                     Chat <i class='bx bx-message-alt-detail services__icon' ></i>
                                 </span>
                                 <span class="services__button" onclick="window.location.href='{{ url_for('rag_creator.rag_details', rag_id=rag.id) }}'">
@@ -74,7 +74,7 @@
                                 </span>
                             </div>
                             {% else %}
-                            <span class="services__button" onclick="window.location.href='{{ url_for('rag_creator.rag_details', rag_id=rag.id) }}'">
+                            <span class="services__button" onclick="window.location.href='{{ rag.next_step_url }}'">
                                 Continue Setup <i class='bx bx-cog services__icon' ></i>
                             </span>
                             {% endif %}

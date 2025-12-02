@@ -1,3 +1,4 @@
+
 // Dark mode toggling
 function toggleDarkMode() {
   const html = document.documentElement;
@@ -11,8 +12,17 @@ document.addEventListener('DOMContentLoaded', () => {
  document.documentElement.classList.toggle('dark', savedTheme === 'dark');
 
  const sidebarState = localStorage.getItem('sidebarState');
- if (sidebarState === 'partiallyHidden') {
-   document.documentElement.classList.add('sidebar-partially-hidden');
+ const isMobile = window.innerWidth <= 768;
+ 
+ if (isMobile) {
+   if (sidebarState === 'mobileOpen') {
+     document.querySelector('.sidebar').classList.add('mobile-open');
+     document.body.classList.add('mobile-sidebar-open');
+   }
+ } else {
+   if (sidebarState === 'partiallyHidden') {
+     document.documentElement.classList.add('sidebar-partially-hidden');
+   }
  }
 
  // Groq temperature
@@ -20,6 +30,13 @@ document.addEventListener('DOMContentLoaded', () => {
  const groqTempValue = document.getElementById('groqTemperatureValue');
  groqTemp.addEventListener('input', function() {
    groqTempValue.textContent = this.value;
+ });
+
+ // GitHub temperature
+ const githubTemp = document.getElementById('githubTemperature');
+ const githubTempValue = document.getElementById('githubTemperatureValue');
+ githubTemp.addEventListener('input', function() {
+   githubTempValue.textContent = this.value;
  });
 
  // Ollama temperature
@@ -42,9 +59,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Toggle partial hidden sidebar
 function toggleSidebar() {
- document.documentElement.classList.toggle('sidebar-partially-hidden');
- const isHidden = document.documentElement.classList.contains('sidebar-partially-hidden');
- localStorage.setItem('sidebarState', isHidden ? 'partiallyHidden' : 'visible');
+ const sidebar = document.querySelector('.sidebar');
+ const isMobile = window.innerWidth <= 768;
+ 
+ if (isMobile) {
+   // On mobile, toggle overlay
+   sidebar.classList.toggle('mobile-open');
+   const isOpen = sidebar.classList.contains('mobile-open');
+   document.body.classList.toggle('mobile-sidebar-open', isOpen);
+   localStorage.setItem('sidebarState', isOpen ? 'mobileOpen' : 'mobileClosed');
+ } else {
+   // On desktop, toggle partial hidden
+   document.documentElement.classList.toggle('sidebar-partially-hidden');
+   const isHidden = document.documentElement.classList.contains('sidebar-partially-hidden');
+   localStorage.setItem('sidebarState', isHidden ? 'partiallyHidden' : 'visible');
+ }
 }
 
 let chat_id = null;
@@ -308,11 +337,20 @@ async function sendMessage(event) {
     // Add user message to chat
     appendMessage(message, "message-outgoing");
 
-    // Add "Answering..." message
+    // Add "Answering..." message with web search indicator
     const answeringDiv = document.createElement('div');
     answeringDiv.className = 'message-bubble message-incoming';
     answeringDiv.id = 'answering-message';
-    answeringDiv.textContent = 'Answering...';
+    
+    const webSearchToggle = document.getElementById('webSearchToggle');
+    const webSearchEnabled = webSearchToggle ? webSearchToggle.checked : false;
+    
+    if (webSearchEnabled) {
+        answeringDiv.innerHTML = '🔍 Searching web and answering...';
+    } else {
+        answeringDiv.textContent = 'Answering...';
+    }
+    
     document.getElementById('chatWindow').appendChild(answeringDiv);
     document.getElementById('chatWindow').scrollTop = document.getElementById('chatWindow').scrollHeight;
 
@@ -320,6 +358,11 @@ async function sendMessage(event) {
         const formData = new FormData();
         formData.append('userInput', message);
         formData.append('chat_id', chatId);
+        
+        // Add web search parameter
+        const webSearchToggle = document.getElementById('webSearchToggle');
+        const webSearchEnabled = webSearchToggle ? webSearchToggle.checked : false;
+        formData.append('web_search_enabled', webSearchEnabled);
 
         const response = await fetch('/regularchat/', {
             method: 'POST',
@@ -492,6 +535,12 @@ async function saveConfig() {
             config.api_key = document.getElementById('groqApiKey').value;
             config.temperature = parseFloat(document.getElementById('groqTemperature').value);
             break;
+        case 'github':
+            config.language_model = document.getElementById('githubModel').value;
+            config.model_type = 'GitHub';
+            config.api_key = document.getElementById('githubApiKey').value;
+            config.temperature = parseFloat(document.getElementById('githubTemperature').value);
+            break;
         case 'ollama':
             config.language_model = document.getElementById('ollamaModel').value;
             config.model_type = 'Ollama';
@@ -625,4 +674,3 @@ async function loadCurrentConfig() {
         console.error('Error loading configuration:', error);
     }
 }
-

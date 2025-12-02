@@ -21,7 +21,7 @@
     
     <header class="header" id="header">
         <nav class="nav container">
-            <a href="{{ url_for('panel') }}" class="nav__logo">IntelliForge</a>
+            <a href="{{ url_for('main.panel') }}" class="nav__logo">IntelliForge</a>
             
             </div>
             <!-- Change Theme Color -->
@@ -53,7 +53,6 @@
                                         <p><strong>Model Type:</strong> {{ rag.model_type or 'Not set' }}</p>
                                         <p><strong>Model Name:</strong> {{ rag.model_name or 'Not set' }}</p>
                                     </div>
-                                    
                                     {% if rag.embedding_model %}
                                     <div class="rag-embedding-info">
                                         <div class="cont" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
@@ -78,36 +77,54 @@
                                     </div>
                                     {% endif %}
                                     
-                                    {% if documents %}
                                     <div class="rag-documents">
                                         
                                         <div class="cont" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
-                                            <h4>Documents ({{ documents|length }})</h4>
+                                            <h4>Documents ({{ documents|length if documents else 0 }})</h4>
                                             <span class="services__button" onclick="window.location.href='{{ url_for('rag_creator.documentation_upload', rag_id=rag.id) }}'">
-                                                <i class="bx bx-cog services__icon"></i>
+                                                <i class="bx bx-plus services__icon"></i>
                                             </span>
                                         </div>
+                                        
+                                        {% if documents %}
                                         <ul class="document-list">
                                             {% for doc in documents %}
-                                            <li>
+                                            <li class="document-item">
                                                 <div class="doc-type">
                                                     {% if doc.doc_type == 'pdf' %}
-                                                    <i class='bx bxs-file-pdf'></i>
+                                                    <i class='bx bxs-file-pdf' style="color: #e74c3c;"></i>
                                                     {% elif doc.doc_type == 'link' %}
-                                                    <i class='bx bx-link'></i>
+                                                    <i class='bx bx-link' style="color: #3498db;"></i>
                                                     {% else %}
-                                                    <i class='bx bxs-file-txt'></i>
+                                                    <i class='bx bxs-file-txt' style="color: #2ecc71;"></i>
                                                     {% endif %}
                                                 </div>
                                                 <div class="doc-info">
                                                     <p class="doc-name">{{ doc.doc_name }}</p>
+                                                    {% if doc.description %}
                                                     <p class="doc-desc">{{ doc.description }}</p>
+                                                    {% endif %}
+                                                    {% if doc.doc_type == 'link' %}
+                                                    <p class="doc-path"><a href="{{ doc.doc_path }}" target="_blank">{{ doc.doc_path }}</a></p>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="doc-actions">
+                                                    <button class="delete-doc-btn" onclick="deleteDocument('{{ doc.doc_path }}')">
+                                                        <i class='bx bx-trash'></i>
+                                                    </button>
                                                 </div>
                                             </li>
                                             {% endfor %}
                                         </ul>
+                                        {% else %}
+                                        <div class="no-documents">
+                                            <p>No documents uploaded yet.</p>
+                                            <a href="{{ url_for('rag_creator.documentation_upload', rag_id=rag.id) }}" class="button">
+                                                Upload Documents
+                                            </a>
+                                        </div>
+                                        {% endif %}
                                     </div>
-                                    {% endif %}
                                     
                                     {% if rag.prompt_template %}
                                     <div class="rag-prompt">
@@ -145,12 +162,12 @@
                                         Continue to Prompt Template
                                     </a>
                                     {% elif rag.status == 'ready' %}
-                                    <a href="{{ url_for('developerassistant.chat_with_rag', rag_id=rag.id) }}" class="button">
+                                    <a href="{{ url_for('rag_creator.rag_chat', rag_id=rag.id) }}" class="button">
                                         Start Chatting
                                     </a>
                                     {% endif %}
                                     
-                                    <a href="{{ url_for('panel') }}" class="button button-secondary">
+                                    <a href="{{ url_for('main.panel') }}" class="button button-secondary">
                                         Back to Panel
                                     </a>
                                 </div>
@@ -191,6 +208,34 @@
                 localStorage.setItem('selected-theme', getCurrentTheme())
                 localStorage.setItem('selected-icon', getCurrentIcon())
             })
+            
+            // Delete document function
+            function deleteDocument(docPath) {
+                if (confirm('Are you sure you want to delete this document? This action cannot be undone.')) {
+                    fetch(`/rag/{{ rag.id }}/delete-document`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            doc_path: docPath
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            alert('Error: ' + data.error);
+                        } else {
+                            alert('Document deleted successfully!');
+                            location.reload(); // Refresh the page to update the document list
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while deleting the document.');
+                    });
+                }
+            }
     
     </script>
         
@@ -225,26 +270,81 @@
             padding: 0;
         }
         
-        .document-list li {
+        .document-item {
             display: flex;
+            align-items: center;
             gap: 1rem;
-            padding: 0.75rem 0;
+            padding: 1rem 0;
             border-bottom: 1px solid rgba(0, 0, 0, 0.1);
         }
         
         .doc-type i {
             font-size: 1.5rem;
-            color: var(--first-color);
+        }
+        
+        .doc-info {
+            flex: 1;
         }
         
         .doc-name {
             font-weight: 500;
             margin-bottom: 0.25rem;
+            color: var(--title-color);
         }
         
         .doc-desc {
             font-size: 0.875rem;
             color: var(--text-color-light);
+            margin-bottom: 0.25rem;
+        }
+        
+        .doc-path {
+            font-size: 0.8rem;
+            margin: 0;
+        }
+        
+        .doc-path a {
+            color: var(--first-color);
+            text-decoration: none;
+            word-break: break-all;
+        }
+        
+        .doc-path a:hover {
+            text-decoration: underline;
+        }
+        
+        .doc-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .delete-doc-btn {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .delete-doc-btn:hover {
+            background-color: rgba(231, 76, 60, 0.1);
+            transform: scale(1.1);
+        }
+        
+        .delete-doc-btn i {
+            font-size: 1.2rem;
+        }
+        
+        .no-documents {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-color-light);
+        }
+        
+        .no-documents p {
+            margin-bottom: 1rem;
         }
         
         .prompt-template {

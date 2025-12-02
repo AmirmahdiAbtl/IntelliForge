@@ -1,10 +1,8 @@
-# Ignore environment files
 .env
-
-# Ignore dependencies and logs
-uploads/
-vectordb/
-
-# Ignore system files
+mlruns/
+__pycache__/
+__pycache__/
+.venv/
 database.db
-Dockerfile
+uploads/
+vectorDB/

@@ -42,7 +42,7 @@
     chatWindow.innerHTML = '';
 
     try {
-      const response = await fetch(`/developerassistant/chat/${id}`);
+      const response = await fetch(`/rag/developerassistant/chat_history/${id}`);
       if (response.ok) {
         const data = await response.json();
         data.chat_details.forEach(([prompt, resp]) => {
@@ -59,7 +59,7 @@
 
   async function createNewChat() {
     try {
-      const response = await fetch('/developerassistant/new_chat', {
+      const response = await fetch('/rag/developerassistant/new_chat', {
         method: 'POST'
       });
       if (response.ok) {
@@ -95,7 +95,7 @@
     sendButton.disabled = true;
 
     try {
-      const response = await fetch('/developerassistant/', {
+      const response = await fetch('/rag/developerassistant/', {
         method: 'POST',
         body: formData
       });

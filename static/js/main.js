@@ -51,7 +51,14 @@ formTabs.forEach(tab => tab.addEventListener("click", activeFormTab));
 
 // Trigger mixitup filter on page load based on active tab
 document.addEventListener('DOMContentLoaded', function() {
-    const activeTab = document.querySelector('.work__item.active-work');
+    let activeTab = document.querySelector('.work__item.active-work');
+    
+    // If no active tab is found, activate the first tab by default
+    if (!activeTab && formTabs.length > 0) {
+        activeTab = formTabs[0];
+        activeTab.classList.add('active-work');
+    }
+    
     if (activeTab) {
         const filter = activeTab.getAttribute('data-filter');
         mixerForms.filter(filter);

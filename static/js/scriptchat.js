@@ -41,10 +41,20 @@ let rag_id = null; // set this dynamically as needed
 
 // Example: set rag_id when the page loads or from the URL
 document.addEventListener("DOMContentLoaded", () => {
- // Example: extract from URL if needed
+ // Extract RAG ID from URL like /rag/4/chat-interface
  const urlParts = window.location.pathname.split('/');
- rag_id = urlParts[urlParts.length - 1]; // if URL is like .../chat/123
- document.getElementById('hiddenRagId').value = rag_id;
+ const ragIndex = urlParts.indexOf('rag');
+ if (ragIndex !== -1 && ragIndex + 1 < urlParts.length) {
+   rag_id = urlParts[ragIndex + 1];
+ }
+ // Also get from hidden field if available
+ const hiddenRagId = document.getElementById('hiddenRagId');
+ if (hiddenRagId && hiddenRagId.value) {
+   rag_id = hiddenRagId.value;
+ }
+ if (hiddenRagId) {
+   hiddenRagId.value = rag_id;
+ }
 });
 
 // Replace your appendMessage function with this:
@@ -89,6 +99,56 @@ function appendMessage(content, classes) {
    
    // Remove the thinking content from the main message
    content = content.replace(/<think>[\s\S]*?<\/think>/, '');
+ }
+
+ // Check if content contains sources
+ if (content.includes('<sources>') && content.includes('</sources>')) {
+   const sourcesDiv = document.createElement('div');
+   sourcesDiv.className = 'sources-dropdown';
+   
+   const header = document.createElement('div');
+   header.className = 'sources-header';
+   header.innerHTML = `
+     <span><i class="fas fa-book"></i> Sources</span>
+     <span class="sources-toggle">▼</span>
+   `;
+   
+   const sourcesContent = document.createElement('div');
+   sourcesContent.className = 'sources-content';
+   
+   // Extract sources from tags
+   const sourcesMatch = content.match(/<sources>([\s\S]*?)<\/sources>/);
+   if (sourcesMatch) {
+     try {
+       const sources = JSON.parse(sourcesMatch[1]);
+       const sourcesList = document.createElement('ul');
+       sourcesList.className = 'sources-list';
+       
+       sources.forEach((source, index) => {
+         const listItem = document.createElement('li');
+         listItem.innerHTML = `<strong>Source ${index + 1}:</strong> ${source.substring(0, 200)}${source.length > 200 ? '...' : ''}`;
+         sourcesList.appendChild(listItem);
+       });
+       
+       sourcesContent.appendChild(sourcesList);
+     } catch (e) {
+       sourcesContent.innerHTML = '<p>Error loading sources</p>';
+     }
+   }
+   
+   sourcesDiv.appendChild(header);
+   sourcesDiv.appendChild(sourcesContent);
+   
+   // Add click handler for toggle
+   header.addEventListener('click', () => {
+     sourcesContent.classList.toggle('show');
+     header.querySelector('.sources-toggle').classList.toggle('rotated');
+   });
+   
+   contentWrapper.appendChild(sourcesDiv);
+   
+   // Remove the sources content from the main message
+   content = content.replace(/<sources>[\s\S]*?<\/sources>/, '');
  }
 
  // Parse content for code blocks
@@ -163,22 +223,23 @@ function appendMessage(content, classes) {
 }
 
 
-async function selectChat(id) {
- chat_id = id;
- document.getElementById('hiddenChatId').value = id;
+async function selectSession(sessionId) {
+ chat_id = sessionId;
+ document.getElementById('hiddenChatId').value = sessionId;
  const chatWindow = document.getElementById('chatWindow');
  chatWindow.innerHTML = '';
 
  try {
-   const response = await fetch(`/developerassistant/chat_history/${id}`);
+   const ragId = document.getElementById('hiddenRagId').value;
+   const response = await fetch(`/rag/${ragId}/session/${sessionId}/history`);
    if (response.ok) {
      const data = await response.json();
      if (data.error) {
        appendMessage(data.error, "message-error");
      } else {
-       data.chat_details.forEach(([prompt, resp]) => {
-         appendMessage(prompt, "message-outgoing");
-         appendMessage(resp, "message-incoming");
+       data.forEach(msg => {
+         appendMessage(msg.user_message, "message-outgoing");
+         appendMessage(msg.bot_response, "message-incoming");
        });
      }
    } else {
@@ -197,12 +258,16 @@ async function createNewChat() {
      return;
    }
 
-   const formData = new FormData();
-   formData.append('rag_id', ragId);
+   // Prepare data for new session
    
-   const response = await fetch('/developerassistant/new_chat', {
+   const response = await fetch(`/rag/${ragId}/new-session`, {
      method: 'POST',
-     body: formData
+     headers: {
+       'Content-Type': 'application/json'
+     },
+     body: JSON.stringify({
+       session_name: 'New Session'
+     })
    });
    
    if (response.ok) {
@@ -212,10 +277,10 @@ async function createNewChat() {
      } else {
        const newChat = document.createElement('li');
        newChat.className = "sidebar-item";
-       newChat.innerText = data.chat_name;
-       newChat.onclick = () => selectChat(data.chat_id);
+       newChat.innerText = data.session_name;
+       newChat.onclick = () => selectSession(data.session_id);
        document.getElementById('sidebarList').prepend(newChat);
-       selectChat(data.chat_id);
+       selectSession(data.session_id);
      }
    } else {
      appendMessage('Error creating new chat.', "message-error");
@@ -241,9 +306,9 @@ async function sendMessage(event) {
     textArea.style.opacity = '0.5';
 
     const formData = new FormData();
-    formData.append('chat_id', chat_id || '');
+    formData.append('session_id', chat_id || '');
     formData.append('userInput', message);
-    formData.append('rag_id', rag_id); // 🔥 send rag_id
+    formData.append('rag_id', rag_id);
 
     appendMessage(message, "message-outgoing");
     // Add "Answering..." message
@@ -257,9 +322,16 @@ async function sendMessage(event) {
     textArea.value = '';
 
     try {
-        const response = await fetch('/developerassistant/', {
+        const response = await fetch(`/rag/${rag_id}/chat`, {
             method: 'POST',
-            body: formData
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                rag_id: parseInt(rag_id),
+                query: message,
+                session_id: chat_id
+            })
         });
 
         // Remove "Answering..." message
@@ -273,11 +345,18 @@ async function sendMessage(event) {
             if (data.error) {
                 appendMessage(data.error, "message-error");
             } else {
-                appendMessage(data.response, "message-incoming");
-                if (data.chat_id) {
-                    chat_id = data.chat_id;
-                    document.getElementById('hiddenChatId').value = data.chat_id;
+                // Update session ID if provided
+                if (data.session_id) {
+                    chat_id = data.session_id;
+                    document.getElementById('hiddenChatId').value = data.session_id;
                 }
+                
+                // Create message content with sources dropdown
+                let messageContent = data.answer;
+                if (data.sources && data.sources.length > 0) {
+                    messageContent += '\n\n<sources>' + JSON.stringify(data.sources) + '</sources>';
+                }
+                appendMessage(messageContent, "message-incoming");
             }
         } else {
             appendMessage('Server error submitting data.', "message-error");

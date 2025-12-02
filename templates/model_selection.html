@@ -24,7 +24,7 @@
         
         <header class="header" id="header">
             <nav class="nav container">
-                <a href="{{ url_for('panel') }}" class="nav__logo">IntelliForge</a>
+                <a href="{{ url_for('main.panel') }}" class="nav__logo">IntelliForge</a>
                 
                 </div>
                 <!-- Change Theme Color -->
@@ -43,10 +43,10 @@
                         <div class="work__filters">
                             <!-- <span class="work__item mixitup-control-active active-work" data-filter="all">All</span> -->
                             
-                            <span class="work__item {% if rag.model_type == 'GROQ' %}mixitup-control-active active-work{% endif %}" data-filter=".form-a">Groq</span>
+                            <span class="work__item {% if rag.model_type == 'GROQ' or not rag.model_type %}mixitup-control-active active-work{% endif %}" data-filter=".form-a">Groq</span>
                             <span class="work__item {% if rag.model_type == 'Ollama' %}mixitup-control-active active-work{% endif %}" data-filter=".form-b">Ollama</span>
                             <span class="work__item {% if rag.model_type == 'ChatGPT' %}mixitup-control-active active-work{% endif %}" data-filter=".form-c">Open AI</span>
-
+                            <span class="work__item {% if rag.model_type == 'GitHub' %}mixitup-control-active active-work{% endif %}" data-filter=".form-d">GitHub</span>
                         </div>
 
                         <div class="form__container container">
@@ -103,6 +103,28 @@
                                         <div class="contact__content">
                                             <form action="{{ url_for('rag_creator.model_selection', rag_id=rag.id) }}" method="POST" class="contact__form">
                                                 <input type="hidden" name="model_type" value="ChatGPT">
+                                                <div class="contact__form-div">
+                                                    <label for="api_key">API KEY:</label>
+                                                    <input type="text" name="api_key" id="api_key" required>
+                                                </div>
+                                                <div class="contact__form-div">
+                                                    <label for="model_name">Model Name:</label>
+                                                    <input type="text" name="model_name" id="model_name" required>
+                                                </div>
+                                                <button style="width: 100%;" type="submit" class="button">Next Step</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>      
+                            <div class="form__section mix form-contact form-d">
+                                <section class="contact section" id="contact">
+                                    <h2 class="section__title">GitHub Models</h2>
+                        
+                                    <div class="contact__container container grid" >
+                                        <div class="contact__content">
+                                            <form action="{{ url_for('rag_creator.model_selection', rag_id=rag.id) }}" method="POST" class="contact__form">
+                                                <input type="hidden" name="model_type" value="GitHub">
                                                 <div class="contact__form-div">
                                                     <label for="api_key">API KEY:</label>
                                                     <input type="text" name="api_key" id="api_key" required>

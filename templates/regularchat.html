@@ -2,38 +2,88 @@
 <html lang="en">
 <head>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <meta charset="UTF-8" />
-  <title>Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IntelliForge Chat</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/stylechat.css') }}">
   <style>
     /* Code block styles */
     pre {
-        background-color: var(--color-secondary);
-        padding: 1em;
-        border-radius: 5px;
+        background-color: var(--color-code-bg);
+        padding: 1.2em;
+        border-radius: 12px;
         overflow-x: auto;
+        border: 1px solid var(--color-border);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     code {
-        font-family: 'Courier New', Courier, monospace;
+        font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
         font-size: 0.9em;
     }
 
     .styled-link {
-      color: #007BFF;       /* Link color */
+      color: var(--color-accent);
       text-decoration: none;
-      transition: background-color 0.3s ease;
+      transition: all 0.3s ease;
+      font-weight: 500;
     }
 
     .styled-link:hover {
-      color: #0056b3;
+      color: var(--color-accent-hover);
+      text-decoration: underline;
+    }
+
+    /* Web Search Toggle Styles */
+    .input-wrapper {
+      position: relative;
+    }
+    
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .toggle-slider {
+      background-color: var(--color-accent);
+    }
+    
+    input:checked + .toggle-slider:before {
+      transform: translateX(14px);
+    }
+    
+    .search-status {
+      font-size: 11px;
+      color: var(--color-accent);
+      margin-top: 2px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .search-status.active {
+      opacity: 1;
     }
 
   </style>
 </head>
 
 <body>
+  <!-- Mobile Toggle Button -->
+  <button class="mobile-toggle" onclick="toggleSidebar()" aria-label="Toggle Sidebar">
+    <i class="fas fa-bars"></i>
+  </button>
+  
   <main class="main-container">
     <!-- Sidebar -->
     <aside class="sidebar">
@@ -50,8 +100,8 @@
       <!-- List of chats -->
       <ul id="sidebarList" class="sidebar-list">
         {% for chat in chats %}
-        <li class="sidebar-item" onclick="selectChat({{chat[0]}})">
-          {{ chat[1] }}
+        <li class="sidebar-item" onclick="selectChat({{chat.id}})">
+          {{ chat.name }}
         </li>
         {% endfor %}
       </ul>
@@ -107,6 +157,7 @@
           <div class="tabs">
             <button class="tab-btn active" onclick="openTab(event, 'groq-tab')">Groq</button>
             <button class="tab-btn" onclick="openTab(event, 'ollama-tab')">Ollama</button>
+            <button class="tab-btn" onclick="openTab(event, 'github-tab')">Github</button>
             <button class="tab-btn" onclick="openTab(event, 'gpt-tab')">GPT</button>
           </div>
 
@@ -129,7 +180,26 @@
               <span id="groqTemperatureValue">0.7</span>
             </div>
           </div>
-
+        <!-- GitHub Tab -->
+          <div id="github-tab" class="tab-content">
+            <div class="config-item">
+              <label for="githubApiKey">API Key:</label>
+              <input type="password" id="githubApiKey" class="config-input" placeholder="Enter your GitHub Token">
+            </div>
+            <div class="config-item">
+              <div style="display: flex; flex-direction: row; justify-content: space-between;">
+                <label for="githubModel">Model:</label>
+                <a  target="_blank" rel="noopener noreferrer" class="styled-link" href="https://github.com/marketplace/models"> Model List </a>
+              </div>
+              <input type="text" id="githubModel" class="config-input" placeholder="e.g., openai/gpt-4o">
+            </div>
+            
+            <div class="config-item">
+              <label for="githubTemperature">Temperature:</label>
+              <input type="range" id="githubTemperature" min="0" max="1" step="0.1" value="0.7" class="config-input">
+              <span id="githubTemperatureValue">0.7</span>
+            </div>
+          </div>
           <!-- Ollama Tab -->
           <div id="ollama-tab" class="tab-content">
             <div class="config-item">
@@ -195,6 +265,14 @@
                 rows="2"
                 placeholder="Type your message... (Enter to send, Shift+Enter for newline)"
               ></textarea>
+              <!-- Web Search Toggle -->
+              <div class="search-toggle-container" style="position: absolute; top: -28px; right: 0; display: flex; align-items: center; gap: 8px; background: var(--color-surface); padding: 4px 8px; border-radius: 16px; border: 1px solid var(--color-border); font-size: 12px;">
+                <span style="color: var(--color-text-muted);">Web Search</span>
+                <label class="toggle-switch" style="position: relative; display: inline-block; width: 32px; height: 18px;">
+                  <input type="checkbox" id="webSearchToggle" style="opacity: 0; width: 0; height: 0;">
+                  <span class="toggle-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--color-border); transition: 0.4s; border-radius: 18px;"></span>
+                </label>
+              </div>
               <!-- <input type="file" id="imageInput" accept="image/*" multiple style="display: none;">
               <button type="button" id="imageButton" class="image-btn" onclick="document.getElementById('imageInput').click()">
                 <i class="fas fa-image" style="font-size: 18px; color: var(--color-text);"></i>
@@ -299,18 +377,38 @@
       document.getElementById('imageGrid').innerHTML = '';
     }
 
-    // Modify the form submission to include all images
+    // Web search toggle functionality
+    const webSearchToggle = document.getElementById('webSearchToggle');
+    
+    // Add search status indicator
+    function createSearchStatus() {
+      const statusDiv = document.createElement('div');
+      statusDiv.id = 'searchStatus';
+      statusDiv.className = 'search-status';
+      statusDiv.textContent = 'Searching web...';
+      document.querySelector('.search-toggle-container').appendChild(statusDiv);
+    }
+    createSearchStatus();
+
+    // Modify the form submission to include all images and web search state
     document.querySelector('form').addEventListener('submit', function(e) {
       e.preventDefault();
       const message = document.getElementById('userInput').value;
       const chatId = document.getElementById('hiddenChatId').value;
+      const webSearchEnabled = document.getElementById('webSearchToggle').checked;
       
       const formData = new FormData();
       formData.append('message', message);
       formData.append('chat_id', chatId);
+      formData.append('web_search_enabled', webSearchEnabled);
       selectedImages.forEach((image, index) => {
         formData.append(`image_${index}`, image);
       });
+
+      // Show search status if web search is enabled
+      if (webSearchEnabled) {
+        document.getElementById('searchStatus').classList.add('active');
+      }
 
       // Send the message and images to the server
       fetch('/send_message', {
@@ -319,6 +417,9 @@
       })
       .then(response => response.json())
       .then(data => {
+        // Hide search status
+        document.getElementById('searchStatus').classList.remove('active');
+        
         if (data.success) {
           // Clear the input and images
           document.getElementById('userInput').value = '';
@@ -330,6 +431,7 @@
         }
       })
       .catch(error => {
+        document.getElementById('searchStatus').classList.remove('active');
         console.error('Error sending message:', error);
       });
     });
